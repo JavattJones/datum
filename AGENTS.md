@@ -170,6 +170,39 @@ See `reference/design-handoff/IMPLEMENTATION.md` for the full checklist.
 
 ---
 
+## 🧰 Harness — verification & multi-agent workflow
+
+This repo is a *harness*: the verification is **visual** (a hi-fi UI), so "done"
+means the screen matches its reference screenshot, not just that tests pass.
+
+**Files**
+- `feature_list.json` — scope, one feature at a time (the 7 phases). Each
+  feature carries its `acceptance` and the `reference_shot` it must match.
+- `scripts/verify.mjs` — the judge. `npm run verify` = structural + typecheck +
+  build + visual capture (if the dev server is up). `--quick` skips build/shots;
+  `--state` is the fast integrity gate the Stop hook runs.
+- `scripts/shoot.mjs` — `npm run shoot` captures `.shots/<screen>-<theme>.png`
+  (Playwright) to compare against `reference/design-handoff/screenshots/`.
+- `docs/{architecture,conventions,verification}.md` — what "good work" means.
+- `CHECKPOINTS.md` — objective final-state criteria (C1–C5).
+- `progress/{current,history}.md` — session state on disk, not in chat.
+- `.claude/agents/{leader,implementer,reviewer}.md` — the orchestration roles.
+
+**How verification works (per feature):** implement → `npm run dev` + `npm run
+shoot` → open `.shots/*.png` vs the `reference_shot` → iterate until they match →
+`npm run verify` green → reviewer approves → mark `done`. See
+`docs/verification.md`.
+
+**Multi-agent mode is opt-in (deliberate deviation from the example).** By
+default we work directly — it's faster and cheaper for tight iteration. When
+JavattJones says **"implement the next pending feature"** (or "actúa como
+leader"), switch to the `leader` role: orchestrate `implementer` → `reviewer`,
+write traces to `progress/`, return only file references (anti-telephone-game),
+and never skip `verify`. For pure questions or small doc/config edits, just do
+them directly.
+
+---
+
 ## ⚡ Updating Octopus
 
 Write to the agent mailbox **only when JavattJones asks explicitly** ("update the vault", "log this in

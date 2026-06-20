@@ -19,7 +19,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "shoot": "node scripts/shoot.mjs"
+    "shoot": "node scripts/shoot.mjs",
+    "verify": "node scripts/verify.mjs"
   },
   "dependencies": {
     "@fontsource-variable/geist-mono": "^5.2.8",

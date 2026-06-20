@@ -1,0 +1,136 @@
+{
+  "project": "datum",
+  "description": "Recreate the DATUM hi-fi design (reference/design-handoff) pixel-perfect in the Vite + React + TS stack. Scope is one feature at a time; a feature is closed only when typecheck/build are green AND its screen matches the reference screenshot.",
+  "rules": {
+    "one_feature_at_a_time": true,
+    "require_visual_match_to_close": true,
+    "require_typecheck_to_close": true,
+    "valid_status": ["pending", "in_progress", "done", "blocked"]
+  },
+  "reference": "reference/design-handoff/README.md",
+  "features": [
+    {
+      "id": 0,
+      "name": "scaffold",
+      "title": "Phase 0 — Project scaffold",
+      "description": "Vite + React + TS + Tailwind v4 + Zustand, design tokens (3 themes), fonts, app shell and screen stubs.",
+      "acceptance": [
+        "npm run build passes (typecheck + vite build)",
+        "3 themes switchable via data-theme (precision default)",
+        "TopBar + screen router + Upload/Processing/Viewer stubs render"
+      ],
+      "reference_shot": null,
+      "status": "done"
+    },
+    {
+      "id": 1,
+      "name": "app_shell",
+      "title": "Phase 1 — App shell (pixel-perfect)",
+      "description": "Bring TopBar + screen transitions to final fidelity. See reference/design-handoff/README.md › Top Bar.",
+      "acceptance": [
+        "TopBar matches reference: brand (cube 27px), project pill, segmented theme switch (3 swatches), help icon button",
+        "Responsive: hide project pill & brand sub <720px, theme switch swatches-only <860px",
+        "Screen router transition is opacity + translateY(8px), ~0.5s",
+        "Help button opens a help affordance (modal or sheet)",
+        "Visual match against reference screenshots (top bar visible in all three)"
+      ],
+      "reference_shot": "reference/design-handoff/screenshots/01-upload.png",
+      "status": "pending"
+    },
+    {
+      "id": 2,
+      "name": "upload_screen",
+      "title": "Phase 2 — Upload screen",
+      "description": "Step indicator, hero, dropzone with real drag & drop, thumb grid, upload foot. See README › SCREEN Upload.",
+      "acceptance": [
+        "Step indicator (1 Capture / 2 Process / 3 3D Model) with active accent state",
+        "Hero: eyebrow, title, lead matching the reference type scale",
+        "Dropzone reacts to dragenter/over/drop (.drag state), buttons 'Select photos' + 'Use sample set'",
+        "Thumb grid: 4:3 tiles, IMG_xxxx label + accent check, staggered pop animation",
+        "Upload foot: meta (count, overlap, coverage) + 'Reconstruct 3D model'",
+        "Visual match against screenshots/01-upload.png (Precision)"
+      ],
+      "reference_shot": "reference/design-handoff/screenshots/01-upload.png",
+      "status": "pending"
+    },
+    {
+      "id": 3,
+      "name": "processing_screen",
+      "title": "Phase 3 — Processing screen",
+      "description": "SVG progress ring + 5-phase step list. See README › SCREEN Processing.",
+      "acceptance": [
+        "220px SVG progress ring (stroke-dashoffset) + mono % + 'Reconstructing' label",
+        "Per-phase title/subtitle (exact copy from the reference)",
+        "5-phase list with pending / active (spinner) / done (check) states",
+        "Progress driver abstracted (backend polling later); simulated fallback for demo",
+        "Visual match against screenshots/02-processing.png (Precision)"
+      ],
+      "reference_shot": "reference/design-handoff/screenshots/02-processing.png",
+      "status": "pending"
+    },
+    {
+      "id": 4,
+      "name": "viewer_3d",
+      "title": "Phase 4 — Viewer 3D",
+      "description": "react-three-fiber scene: modes, camera views, floating dimensions, layers, scale bar. See README › Viewer main + Visor 3D.",
+      "acceptance": [
+        "OrbitControls: damping 0.08, minDist 4, maxDist 22, maxPolarAngle ~89deg, target (0,0.4,0)",
+        "Modes Solid (vertex colors) / Mesh (wireframe accent) / Points",
+        "Camera views iso / plan / elevation with eased camera animation (~720ms)",
+        "Toolbars: TL views, TR auto-orbit + measure + fullscreen",
+        "Floating dimension labels projected from 3D each frame + area label",
+        "Layers: boundary (polygon + posts), contours, metric grid; scale bar 10 m",
+        "Visual match against screenshots/03-viewer.png (Precision)"
+      ],
+      "reference_shot": "reference/design-handoff/screenshots/03-viewer.png",
+      "status": "pending"
+    },
+    {
+      "id": 5,
+      "name": "inspector",
+      "title": "Phase 5 — Inspector",
+      "description": "Data panel: surface, dimensions, precision, location map, layers, footer; mobile bottom sheet. See README › Inspector.",
+      "acceptance": [
+        "Header: plot title + As-built badge + sub (reconstructed, photos, date)",
+        "Surface hero metric + delta + subtext (ha, real 3D surface)",
+        "Elevations & dimensions 2x3 grid; Precision card (RMSE bar + GSD + points)",
+        "Location · As-built: map (canvas placeholder, MapLibre later) + coords + Relocate (cycles 4 cities)",
+        "Layers toggles synced with the viewer; footer New + Export As-built (loading state)",
+        "Mobile (<880px): inspector is a draggable bottom sheet",
+        "Visual match against screenshots/03-viewer.png inspector + theme-topo/theme-studio"
+      ],
+      "reference_shot": "reference/design-handoff/screenshots/03-viewer.png",
+      "status": "pending"
+    },
+    {
+      "id": 6,
+      "name": "real_integration",
+      "title": "Phase 6 — Real pipeline integration",
+      "description": "Wire upload → photogrammetry backend, real progress, real mesh + metrics + georeferencing, export.",
+      "acceptance": [
+        "Upload posts photos to the photogrammetry backend (WebODM/Metashape/RealityCapture/custom)",
+        "Processing progress fed by polling/websocket (real, not simulated)",
+        "Viewer loads real glTF mesh + metrics + georeferencing JSON",
+        "Export As-built implemented (DXF / GeoJSON / glTF / PDF)",
+        "No simulated data remains on the production path"
+      ],
+      "reference_shot": null,
+      "status": "pending"
+    },
+    {
+      "id": 7,
+      "name": "polish",
+      "title": "Phase 7 — Polish",
+      "description": "Accessibility, reduced motion, performance, error/empty states, cross-theme & breakpoint QA.",
+      "acceptance": [
+        "a11y: roles/aria-pressed, visible focus, contrast, hit targets >=44px on mobile",
+        "prefers-reduced-motion disables auto-orbit and non-essential animation",
+        "Performance: mesh LOD/decimation, instancing for dense point clouds",
+        "Error & empty states (no photos, reconstruction failure, no GPS)",
+        "Visual match across the 3 breakpoints (desktop/tablet/mobile) and 3 themes"
+      ],
+      "reference_shot": null,
+      "status": "pending"
+    }
+  ]
+}
