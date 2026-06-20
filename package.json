@@ -2,7 +2,7 @@
   "name": "datum",
   "version": "0.1.0",
   "description": "DATUM — 3D photogrammetry / as-built web app for architecture studios. Turn site photos into a measurable 3D model.",
-  "author": "Javier Cordero",
+  "author": "JavattJones",
   "license": "UNLICENSED",
   "private": true,
   "type": "module",

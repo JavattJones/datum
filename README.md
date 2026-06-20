@@ -86,4 +86,4 @@ In this scaffold the data and terrain are **simulated** (procedural) for demo pu
 
 ## License
 
-UNLICENSED — © Javier Cordero. All rights reserved.
+UNLICENSED — © JavattJones. All rights reserved.

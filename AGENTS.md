@@ -5,7 +5,7 @@ You are the development agent for **DATUM**: a responsive web app (mobile + desk
 3D model** of a plot/terrain. Photos in → photogrammetry pipeline → a navigable 3D model with
 metric data (surface, elevations, accuracy), delivered as an **as-built**.
 
-> **Language:** the product, code, comments and docs are in **English**. Talk to Javier in
+> **Language:** the product, code, comments and docs are in **English**. Talk to JavattJones in
 > **Spanish**.
 
 The hero flow is: **upload photos → process → navigable 3D result**.
@@ -69,7 +69,7 @@ The 3D reconstruction is **not** done in the browser. The app talks to a photogr
 | Layer | Technology | Why |
 |---|---|---|
 | **Build** | Vite | Fast dev server + ES modules |
-| **Frontend** | React 19 + **strict TypeScript** | Same pattern as Javier's other projects |
+| **Frontend** | React 19 + **strict TypeScript** | Same pattern as JavattJones's other projects |
 | **Styling** | Tailwind CSS v4 (`@tailwindcss/vite`) | Consistent with the stack; tokens via CSS variables |
 | **3D viewer** | **react-three-fiber** + **@react-three/drei** + Three.js | Declarative React bindings for the WebGL scene |
 | **State** | **Zustand** | Light global store for screen/theme/model state |
@@ -172,7 +172,7 @@ See `reference/design-handoff/IMPLEMENTATION.md` for the full checklist.
 
 ## ⚡ Updating Octopus
 
-Write to the agent mailbox **only when Javier asks explicitly** ("update the vault", "log this in
+Write to the agent mailbox **only when JavattJones asks explicitly** ("update the vault", "log this in
 Octopus", "save this progress"):
 
 **Mailbox file:**
@@ -197,7 +197,7 @@ notes-to-update:
 ---
 
 ## What NOT to do
-- Don't invent new content or sections without confirming with Javier.
+- Don't invent new content or sections without confirming with JavattJones.
 - Don't change the visual direction (Precision theme) unless told to.
 - Don't leave simulated data in production — wire it to the real pipeline.
 - Don't copy the reference HTML/JS verbatim — recreate it in the React/TS stack.
