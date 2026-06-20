@@ -18,7 +18,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "shoot": "node scripts/shoot.mjs"
   },
   "dependencies": {
     "@fontsource-variable/geist-mono": "^5.2.8",
@@ -37,6 +38,7 @@
     "@types/react-dom": "^19.2.3",
     "@types/three": "^0.184.1",
     "@vitejs/plugin-react": "^6.0.2",
+    "playwright": "^1.61.0",
     "tailwindcss": "^4.3.1",
     "typescript": "^6.0.3",
     "vite": "^8.0.16"

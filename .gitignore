@@ -10,6 +10,9 @@ dist-ssr/
 .vite/
 *.tsbuildinfo
 
+# local visual-capture output (harness screenshots)
+.shots/
+
 # logs
 logs
 *.log
