@@ -1,0 +1,12 @@
+{
+  "name": "datum-photogrammetry",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DATUM — App de fotogrametría 3D / As-built para estudios de arquitectura. Paquete de referencia de diseño (HTML/CSS/Three.js) para recrear en el codebase destino.",
+  "scripts": {
+    "dev": "npx serve -l 5173 .",
+    "start": "npx serve -l 5173 ."
+  },
+  "keywords": ["photogrammetry", "3d", "as-built", "three.js", "architecture", "design-handoff"],
+  "license": "UNLICENSED"
+}

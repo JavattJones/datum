@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="precision">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>DATUM — Fotogrametría 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 2 3 7v10l9 5 9-5V7l-9-5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m3 7 9 5 9-5M12 12v10" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="brand-name">DATUM</div>
+      <div class="brand-sub">Photogrammetry&nbsp;Suite</div>
+    </div>
+
+    <div class="topbar-spacer"></div>
+
+    <div class="project-pill">
+      <span class="dot"></span>
+      <span>Parcela&nbsp;<b>P-204 · Vega Norte</b></span>
+    </div>
+
+    <div class="theme-switch" id="themeSwitch">
+      <button data-theme-val="precision" aria-pressed="true"><span class="sw"></span><span>Precision</span></button>
+      <button data-theme-val="dark" aria-pressed="false"><span class="sw"></span><span>Topo</span></button>
+      <button data-theme-val="light" aria-pressed="false"><span class="sw"></span><span>Studio</span></button>
+    </div>
+
+    <button class="icon-btn" title="Ayuda">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7m0 3h0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+  </header>
+
+  <!-- ============ STAGE ============ -->
+  <div class="stage">
+
+    <!-- ===== SCREEN 1 — UPLOAD ===== -->
+    <section class="screen active" id="screen-upload">
+      <div class="upload-wrap">
+        <div class="step-row">
+          <div class="step-chip on"><span class="n">1</span> Capturar</div>
+          <div class="step-sep"></div>
+          <div class="step-chip"><span class="n">2</span> Procesar</div>
+          <div class="step-sep"></div>
+          <div class="step-chip"><span class="n">3</span> Modelo&nbsp;3D</div>
+        </div>
+
+        <p class="h-eyebrow">Nuevo levantamiento</p>
+        <h1 class="h-title">De fotografías a modelo medible.</h1>
+        <p class="h-lead">Sube el set de imágenes del vuelo o de campo. DATUM reconstruye la malla 3D de la parcela, calcula superficie, cotas y curvas de nivel, y la georreferencia como <em>as-built</em>.</p>
+
+        <div class="dropzone" id="dropzone">
+          <div class="dropzone-ico">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 16V4m0 0L8 8m4-4 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          </div>
+          <h3>Arrastra tus fotografías aquí</h3>
+          <p>JPG, PNG o RAW · recomendado 40–300 tomas con solape</p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+            <button class="btn btn-primary" id="btnBrowse">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h4l2-2h4l2 2h4v12H4V7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
+              Seleccionar fotos
+            </button>
+            <button class="btn btn-ghost" id="btnSample">Usar set de muestra</button>
+          </div>
+          <div class="hint-row">
+            <span class="hint"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Detección GPS / EXIF</span>
+            <span class="hint"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Solape automático</span>
+            <span class="hint"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Escala métrica real</span>
+          </div>
+        </div>
+
+        <div class="thumbs" id="thumbs"></div>
+
+        <div class="upload-foot" id="uploadFoot" style="display:none;">
+          <div class="upload-meta"><b id="photoCount">0</b> fotografías · solape medio <b>78%</b> · cobertura <b>96%</b></div>
+          <button class="btn btn-primary" id="btnProcess">
+            Reconstruir modelo 3D
+            <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SCREEN 2 — PROCESSING ===== -->
+    <section class="screen" id="screen-processing">
+      <div class="proc-wrap">
+        <div class="proc-canvas-holder">
+          <svg class="proc-ring" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="44" fill="none" stroke="var(--stroke)" stroke-width="3"/>
+            <circle id="ringFill" cx="50" cy="50" r="44" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="276.5" transform="rotate(-90 50 50)"/>
+          </svg>
+          <div class="proc-pct"><div><div class="v" id="procPct">0%</div><div class="l">Reconstruyendo</div></div></div>
+        </div>
+        <h2 class="proc-title" id="procTitle">Alineando fotografías</h2>
+        <p class="proc-sub" id="procSub">Detectando puntos clave y estimando posiciones de cámara…</p>
+        <div class="proc-steps" id="procSteps"></div>
+      </div>
+    </section>
+
+    <!-- ===== SCREEN 3 — VIEWER ===== -->
+    <section class="screen" id="screen-viewer">
+      <div class="viewer-main">
+        <canvas id="scene"></canvas>
+        <div class="scene-overlay" id="overlay"></div>
+
+        <!-- mode group -->
+        <div class="mode-group" id="modeGroup">
+          <button class="mode-btn" data-mode="solid" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2 2 8l10 6 10-6-10-6Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="m2 16 10 6 10-6" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span>Sólido</span></button>
+          <button class="mode-btn" data-mode="wire" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h18M7 3v18M12 3v18M17 3v18" stroke="currentColor" stroke-width="1.3"/></svg><span>Malla</span></button>
+          <button class="mode-btn" data-mode="points" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none"><circle cx="6" cy="7" r="1.3" fill="currentColor"/><circle cx="12" cy="5" r="1.3" fill="currentColor"/><circle cx="18" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="13" r="1.3" fill="currentColor"/><circle cx="15" cy="12" r="1.3" fill="currentColor"/><circle cx="6" cy="18" r="1.3" fill="currentColor"/><circle cx="12" cy="19" r="1.3" fill="currentColor"/><circle cx="18" cy="17" r="1.3" fill="currentColor"/></svg><span>Nube</span></button>
+        </div>
+
+        <!-- top-left views -->
+        <div class="v-toolbar tl">
+          <button class="tool" id="vReset"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2 2 8l10 6 10-6-10-6Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span class="tip">Vista isométrica</span></button>
+          <button class="tool" id="vTop"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M4 9h16M9 4v16" stroke="currentColor" stroke-width="1.2"/></svg><span class="tip">Planta (cenital)</span></button>
+          <button class="tool" id="vFront"><svg viewBox="0 0 24 24" fill="none"><path d="M3 18h18M5 18V9l7-4 7 4v9" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg><span class="tip">Alzado</span></button>
+        </div>
+
+        <!-- top-right actions -->
+        <div class="v-toolbar tr">
+          <button class="tool" id="vRotate"><svg viewBox="0 0 24 24" fill="none"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="tip">Auto-órbita</span></button>
+          <div class="tool-sep"></div>
+          <button class="tool" id="vMeasure"><svg viewBox="0 0 24 24" fill="none"><path d="M3 7l4-4 14 14-4 4L3 7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 7l2 2m1-4 2 2m1-1 2 2" stroke="currentColor" stroke-width="1.3"/></svg><span class="tip">Medir</span></button>
+          <button class="tool" id="vFull"><svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="tip">Pantalla completa</span></button>
+        </div>
+
+        <!-- scale bar + compass -->
+        <div class="scene-foot">
+          <div class="scalebar"><div class="bar"></div><div class="lab">10 m</div></div>
+        </div>
+      </div>
+
+      <!-- ===== INSPECTOR ===== -->
+      <aside class="inspector" id="inspector">
+        <div class="insp-mobile-tab" id="inspTab">
+          <span class="grip"></span>
+          <svg viewBox="0 0 24 24" fill="none"><path d="M3 9h18M3 15h18" stroke="currentColor" stroke-width="1.6"/></svg>
+          Datos del modelo
+        </div>
+
+        <div class="insp-head">
+          <div class="title-row">
+            <h2>Vega Norte · P-204</h2>
+            <span class="badge-ok"><span class="dot"></span>As-built</span>
+          </div>
+          <p class="sub">Reconstruido · 184 fotos · 12 jun 2026</p>
+        </div>
+
+        <div class="insp-body">
+          <!-- SUPERFICIE -->
+          <div class="insp-section">
+            <p class="sec-label"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M3 9h18M9 21V9" stroke="currentColor" stroke-width="1.3"/></svg> Superficie</p>
+            <div class="metric-hero">
+              <span class="val" id="mArea">1 623</span><span class="unit">m²</span>
+              <span class="delta"><svg viewBox="0 0 24 24" fill="none" width="11" height="11"><path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>±0.4%</span>
+            </div>
+            <p class="metric-sub">Proyección horizontal · 0.162 ha · superficie real 3D <b id="mArea3d">1 671 m²</b></p>
+          </div>
+
+          <!-- COTAS -->
+          <div class="insp-section">
+            <p class="sec-label"><svg viewBox="0 0 24 24" fill="none"><path d="M3 21V3M3 21h18M7 21v-4m4 4v-8m4 8v-5m4 5V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Cotas y dimensiones</p>
+            <div class="mgrid">
+              <div class="mcell"><p class="k">Ancho</p><p class="v" id="mW">48.60 <small>m</small></p></div>
+              <div class="mcell"><p class="k">Fondo</p><p class="v" id="mD">33.40 <small>m</small></p></div>
+              <div class="mcell"><p class="k">Perímetro</p><p class="v" id="mP">164.0 <small>m</small></p></div>
+              <div class="mcell"><p class="k">Desnivel</p><p class="v" id="mDrop">4.85 <small>m</small></p></div>
+              <div class="mcell"><p class="k">Cota mín.</p><p class="v" id="mMin">820.4 <small>m</small></p></div>
+              <div class="mcell"><p class="k">Cota máx.</p><p class="v" id="mMax">825.2 <small>m</small></p></div>
+            </div>
+          </div>
+
+          <!-- PRECISION -->
+          <div class="insp-section">
+            <p class="sec-label"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg> Precisión del modelo</p>
+            <div class="prec-row"><span class="pk">Error medio (RMSE)</span><span class="pv">1.8 cm</span></div>
+            <div class="prec-track"><div class="prec-fill" style="width:86%"></div></div>
+            <div class="prec-scale"><span>0 cm</span><span>Grado topográfico</span><span>5 cm</span></div>
+            <div style="display:flex; gap:18px; margin-top:16px;">
+              <div><p style="font-family:var(--font-mono); font-size:18px; font-weight:600; margin:0;">GSD 1.4<small style="font-size:11px; color:var(--text-2);">cm/px</small></p><p style="font-size:11px; color:var(--text-3); margin:4px 0 0;">Resolución suelo</p></div>
+              <div><p style="font-family:var(--font-mono); font-size:18px; font-weight:600; margin:0;">2.1 M</p><p style="font-size:11px; color:var(--text-3); margin:4px 0 0;">Puntos de malla</p></div>
+            </div>
+          </div>
+
+          <!-- MAPA -->
+          <div class="insp-section">
+            <p class="sec-label"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-5.7 7-11a7 7 0 1 0-14 0c0 5.3 7 11 7 11Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.4" stroke="currentColor" stroke-width="1.6"/></svg> Ubicación · As-built</p>
+            <div class="map-card">
+              <canvas id="mapCanvas" width="600" height="260"></canvas>
+              <div class="map-pin"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z"/></svg></div>
+              <div class="map-meta">
+                <span class="coord" id="mapCoord">40.4168° N · 3.7038° O</span>
+                <button class="map-edit" id="btnRelocate"><svg viewBox="0 0 24 24" fill="none"><path d="M4 13v7h7m9-9V4h-7M4 11 20 4M4 20l9-9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Reubicar</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- CAPAS -->
+          <div class="insp-section">
+            <p class="sec-label"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3 2 8l10 5 10-5-10-5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="m2 13 10 5 10-5M2 18l10 5 10-5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg> Capas</p>
+            <div class="layer"><span class="sw" style="background:#34d399"></span><span class="nm">Límite de parcela</span><span class="ct">4 vért.</span><button class="toggle" data-layer="boundary" aria-pressed="true"></button></div>
+            <div class="layer"><span class="sw" style="background:#ffffff"></span><span class="nm">Curvas de nivel</span><span class="ct">0.5 m</span><button class="toggle" data-layer="contours" aria-pressed="false"></button></div>
+            <div class="layer"><span class="sw" style="background:#7c8694"></span><span class="nm">Rejilla métrica</span><span class="ct">1 m</span><button class="toggle" data-layer="grid" aria-pressed="true"></button></div>
+          </div>
+        </div>
+
+        <div class="insp-foot">
+          <button class="btn btn-ghost" id="btnNew">Nuevo</button>
+          <button class="btn btn-primary" style="flex:1.4;" id="btnExport">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Exportar As-built
+          </button>
+        </div>
+      </aside>
+    </section>
+
+  </div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
