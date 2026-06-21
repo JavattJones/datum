@@ -39,8 +39,10 @@ async function main() {
   await page.goto(URL, { waitUntil: 'networkidle' })
   await sleep(600)
 
-  // Upload screen (Precision default)
-  await page.screenshot({ path: `${OUT}/upload-precision.png` })
+  // Upload screen (Precision default).
+  // animations:'disabled' fast-forwards finite CSS animations (e.g. screen-in)
+  // to their end state, so captures aren't raced by transitions.
+  await page.screenshot({ path: `${OUT}/upload-precision.png`, animations: 'disabled' })
   console.log(`✓ ${OUT}/upload-precision.png`)
 
   // Viewer × 3 themes
@@ -52,7 +54,7 @@ async function main() {
   ]) {
     await setTheme(page, label)
     await sleep(400)
-    await page.screenshot({ path: `${OUT}/viewer-${theme}.png` })
+    await page.screenshot({ path: `${OUT}/viewer-${theme}.png`, animations: 'disabled' })
     console.log(`✓ ${OUT}/viewer-${theme}.png`)
   }
 

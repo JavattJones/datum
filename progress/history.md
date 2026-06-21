@@ -15,3 +15,21 @@
   `scripts/verify.mjs`, `docs/`, `CHECKPOINTS.md`, leader/implementer/reviewer,
   `progress/`. Verification backbone is **visual** (screenshots vs reference).
 - Next: feature 1 (`app_shell`) — bring the TopBar to pixel-perfect fidelity.
+
+---
+
+## 2026-06-21 — Feature 1 (app_shell) DONE
+
+- TopBar pixel-perfect vs `01-upload.png`: pill theme switch, brand glow + sub
+  separator, project pill (P-204 bold), spacer after brand → right cluster.
+- New `HelpDialog` (accessible: Escape/backdrop/close, focus on open).
+- Screen router transition (`screen-in`: opacity + translateY(8px), 0.5s).
+- Responsive verified at 700px: <720 hides pill + brand-sub, <860 swatch-only.
+- Harness fix: `shoot.mjs` now captures with `animations:'disabled'` (was racing
+  the screen fade-in → blank body).
+- `npm run verify` green; reviewer (self) APPROVED. See
+  `progress/{impl,review}_app_shell.md`.
+- Orchestration note: the `implementer` subagent hit the account session limit
+  mid-orientation; the leader implemented directly to avoid a costly re-spawn.
+- Next: feature 2 (`upload_screen`).
+

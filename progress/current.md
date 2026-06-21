@@ -9,11 +9,9 @@
 
 ## Plan
 
-_3–5 bullets of what you'll do before touching code._
+_Describe in 3–5 bullets what you'll do before touching code._
 
 ## Log
-
-_Each significant step: files created, decisions, blockers._
 
 - ...
 
