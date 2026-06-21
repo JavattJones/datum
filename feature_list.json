@@ -83,7 +83,7 @@
         "Visual match against screenshots/03-viewer.png (Precision)"
       ],
       "reference_shot": "reference/design-handoff/screenshots/03-viewer.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 5,

@@ -1,70 +1,34 @@
+import { useRef } from 'react'
 import { SceneCanvas } from '@/viewer/SceneCanvas'
-import { useAppStore, type ViewMode } from '@/store/appStore'
-
-const MODES: { id: ViewMode; label: string }[] = [
-  { id: 'solid', label: 'Solid' },
-  { id: 'wire', label: 'Mesh' },
-  { id: 'points', label: 'Points' },
-]
+import { ModeToolbar } from '@/viewer/ModeToolbar'
+import { ViewsToolbar, ActionsToolbar } from '@/viewer/ViewToolbar'
+import { ScaleBar } from '@/viewer/ScaleBar'
+import { useAppStore } from '@/store/appStore'
 
 /**
- * Phase 4 + 5 — Viewer + Inspector (scaffold).
- * TODO: view toolbar (iso/plan/elevation), floating dimensions, scale bar,
- * full inspector sections, mobile bottom sheet.
+ * Phase 4 — Viewer 3D scene + overlays (mode group, view/action toolbars,
+ * floating dimensions, scale bar). The Inspector panel is Phase 5 (scaffold
+ * below). Reference: README › Viewer main + Visor 3D.
  */
 export function ViewerScreen() {
-  const viewMode = useAppStore((s) => s.viewMode)
-  const setViewMode = useAppStore((s) => s.setViewMode)
-  const autoRotate = useAppStore((s) => s.autoRotate)
-  const toggleAutoRotate = useAppStore((s) => s.toggleAutoRotate)
+  const mainRef = useRef<HTMLDivElement>(null)
+
+  const onFullscreen = () => {
+    const el = mainRef.current
+    if (!el) return
+    if (document.fullscreenElement) document.exitFullscreen()
+    else el.requestFullscreen?.()
+  }
 
   return (
     <div className="flex h-full flex-col md:flex-row">
-      {/* Viewer main */}
-      <div className="relative min-h-[40%] flex-1">
+      {/* Viewer main — the 3D scene fills it; overlays float on top. */}
+      <div ref={mainRef} className="relative min-h-[40%] flex-1">
         <SceneCanvas />
-
-        {/* Mode group */}
-        <div className="absolute left-1/2 top-4 flex -translate-x-1/2 gap-0.5 rounded-[var(--radius-token)] border border-stroke bg-panel/80 p-0.5 backdrop-blur">
-          {MODES.map((m) => {
-            const active = m.id === viewMode
-            return (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => setViewMode(m.id)}
-                aria-pressed={active}
-                className={`mono rounded-[5px] px-3 py-1.5 text-[12px] transition-colors ${
-                  active ? 'text-on-accent' : 'text-text-2 hover:text-text'
-                }`}
-                style={active ? { background: 'var(--accent)' } : undefined}
-              >
-                {m.label}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Auto-orbit toggle */}
-        <div className="absolute right-4 top-4">
-          <button
-            type="button"
-            onClick={toggleAutoRotate}
-            aria-pressed={autoRotate}
-            className={`mono rounded-[var(--radius-token)] border border-stroke px-3 py-1.5 text-[12px] backdrop-blur transition-colors ${
-              autoRotate ? 'text-on-accent' : 'bg-panel/80 text-text-2'
-            }`}
-            style={autoRotate ? { background: 'var(--accent)' } : undefined}
-          >
-            Auto-orbit
-          </button>
-        </div>
-
-        {/* Scale bar */}
-        <div className="mono absolute bottom-4 left-1/2 -translate-x-1/2 text-center text-[11px] text-text-2">
-          <div className="mx-auto h-1 w-20 border-x border-b border-text-2" />
-          10 m
-        </div>
+        <ModeToolbar />
+        <ViewsToolbar />
+        <ActionsToolbar onFullscreen={onFullscreen} />
+        <ScaleBar />
       </div>
 
       <Inspector />

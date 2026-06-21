@@ -3,6 +3,7 @@ import { DEFAULT_THEME, type ThemeId } from '@/theme/tokens'
 
 export type Screen = 'upload' | 'processing' | 'viewer'
 export type ViewMode = 'solid' | 'wire' | 'points'
+export type CameraView = 'iso' | 'plan' | 'elevation'
 
 export interface Photo {
   id: string
@@ -74,6 +75,8 @@ interface AppState {
   autoRotate: boolean
   measureMode: boolean
   layers: Layers
+  /** Camera-view request: bumps `nonce` so the scene re-animates on repeat clicks. */
+  viewRequest: { view: CameraView; nonce: number }
   /** Index into the demo location cycle (Madrid / Barcelona / …). */
   location: number
   model: ModelData
@@ -84,6 +87,7 @@ interface AppState {
   clearPhotos: () => void
   setProcessing: (processing: Partial<ProcessingState>) => void
   setViewMode: (mode: ViewMode) => void
+  requestView: (view: CameraView) => void
   toggleAutoRotate: () => void
   toggleMeasureMode: () => void
   toggleLayer: (layer: keyof Layers) => void
@@ -100,6 +104,7 @@ export const useAppStore = create<AppState>((set) => ({
   autoRotate: false,
   measureMode: false,
   layers: { boundary: true, contours: false, grid: true },
+  viewRequest: { view: 'iso', nonce: 0 },
   location: 0,
   model: MOCK_MODEL,
 
@@ -110,6 +115,8 @@ export const useAppStore = create<AppState>((set) => ({
   setProcessing: (processing) =>
     set((s) => ({ processing: { ...s.processing, ...processing } })),
   setViewMode: (viewMode) => set({ viewMode }),
+  requestView: (view) =>
+    set((s) => ({ viewRequest: { view, nonce: s.viewRequest.nonce + 1 } })),
   toggleAutoRotate: () => set((s) => ({ autoRotate: !s.autoRotate })),
   toggleMeasureMode: () => set((s) => ({ measureMode: !s.measureMode })),
   toggleLayer: (layer) =>

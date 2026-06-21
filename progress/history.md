@@ -72,3 +72,28 @@
   `waitForSelector` guard. Whole UI confirmed English.
 - Next: feature 4 (`viewer_3d`).
 
+---
+
+## 2026-06-21 — Feature 4 (viewer_3d) DONE
+
+- Built the react-three-fiber viewer scene vs `03-viewer.png` (Precision).
+- `viewer/terrain.ts`: deterministic fBm value-noise heightfield (ported from
+  the reference prototype) → BufferGeometry colored by elevation, plus derived
+  corners, contour cloud, and 5 dimension anchors (4 edges + area). Pure data,
+  no React.
+- `viewer/SceneCanvas.tsx`: terrain modes Solid (vertex colors) / Mesh (accent
+  wireframe .42) / Points (.018); boundary polygon + corner drop-posts;
+  contour points; metric gridHelper; OrbitControls (damping .08, dist 4–22,
+  polar .49π, target 0,0.4,0, autoRotate .6). Eased camera moves (~720ms
+  ease-out-cubic) driven by store `viewRequest{view,nonce}`. Floating dim
+  labels via drei `<Html>` (projected each frame), accent area label.
+- Toolbars: `ModeToolbar` (centered segmented), `ViewToolbar` (TL iso/plan/
+  elevation + TR auto-orbit·measure·fullscreen with hover tooltips),
+  `ScaleBar` (10 m). `.dim-label` + `.scalebar-bar` styles added to index.css.
+- Store: added `CameraView`, `viewRequest`, `requestView`.
+- Verified: `tsc --noEmit` + `npm run build` green. Captured solid/mesh/points
+  + plan view via system Chromium (SwiftShader) — all match: terrain, boundary,
+  dims, scale bar, toolbars, mode switching and camera animation all working.
+- Note: Inspector panel left as the existing scaffold (that's feature 5).
+- Next: feature 5 (`inspector`).
+
