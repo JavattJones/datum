@@ -6,6 +6,7 @@ import { HelpDialog } from '@/components/HelpDialog'
 export function TopBar() {
   const theme = useAppStore((s) => s.theme)
   const setTheme = useAppStore((s) => s.setTheme)
+  const model = useAppStore((s) => s.model)
   const [helpOpen, setHelpOpen] = useState(false)
 
   return (
@@ -42,7 +43,7 @@ export function TopBar() {
           style={{ background: 'var(--accent)', boxShadow: '0 0 8px var(--accent)' }}
         />
         <span>
-          Plot <b className="font-semibold text-text">P-204</b> · Vega Norte
+          Plot <b className="font-semibold text-text">{model.plot}</b> · {model.name}
         </span>
       </div>
 

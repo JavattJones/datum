@@ -10,6 +10,8 @@ export interface Photo {
   label: string
   /** Real file when picked from disk; absent for the demo sample set. */
   file?: File
+  /** Public image URL for the bundled demo sample set; absent for picked files. */
+  src?: string
 }
 
 export interface Layers {
@@ -58,24 +60,28 @@ export interface ProcessingState {
   currentStep: number
 }
 
-/** Demo model — returned by the mock pipeline adapter (dev fallback only). */
+/**
+ * Demo model — returned by the mock pipeline adapter (dev fallback only).
+ * Tuned to the bundled sample set: a small walled kitchen garden reconstructed
+ * from 11 close-range photographs (see `src/lib/sampleSet.ts`).
+ */
 export const DEMO_MODEL: ModelData = {
-  name: 'Vega Norte',
-  plot: 'P-204',
-  photoCount: 184,
-  date: '12 Jun 2026',
-  surface: 1623,
-  surface3d: 1671,
-  surfaceDelta: 0.4,
-  width: 48.6,
-  depth: 33.4,
-  perimeter: 164.0,
-  drop: 4.85,
-  minElevation: 820.4,
-  maxElevation: 825.2,
-  rmse: 1.8,
-  gsd: 1.4,
-  points: 2.1,
+  name: 'Kitchen Garden',
+  plot: 'P-12',
+  photoCount: 11,
+  date: '21 Jun 2026',
+  surface: 182,
+  surface3d: 188,
+  surfaceDelta: 0.8,
+  width: 15.4,
+  depth: 12.2,
+  perimeter: 56.4,
+  drop: 1.4,
+  minElevation: 642.0,
+  maxElevation: 643.4,
+  rmse: 2.4,
+  gsd: 0.5,
+  points: 5.8,
 }
 
 interface AppState {

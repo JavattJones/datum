@@ -1,17 +1,10 @@
 import { useState } from 'react'
-import { useAppStore, type Photo } from '@/store/appStore'
+import { useAppStore } from '@/store/appStore'
 import { pipeline } from '@/lib/pipeline'
+import { sampleSet } from '@/lib/sampleSet'
 import { StepIndicator } from '@/components/upload/StepIndicator'
 import { Dropzone } from '@/components/upload/Dropzone'
 import { ThumbGrid } from '@/components/upload/ThumbGrid'
-
-/** Demo sample set — used with the mock pipeline (no real files). */
-function makeSamplePhotos(n: number, start: number): Photo[] {
-  return Array.from({ length: n }, (_, i) => ({
-    id: crypto.randomUUID(),
-    label: `IMG_${String(2040 + start + i).padStart(4, '0')}`,
-  }))
-}
 
 /**
  * Phase 2 — Upload screen.
@@ -38,7 +31,7 @@ export function UploadScreen() {
   }
 
   const handleSample = () => {
-    if (photos.length === 0) addPhotos(makeSamplePhotos(18, photos.length))
+    if (photos.length === 0) addPhotos(sampleSet())
   }
 
   // Post the photo set to the pipeline, then move to processing.
@@ -77,8 +70,8 @@ export function UploadScreen() {
           <div className="mt-[30px] flex flex-wrap items-center justify-between gap-4">
             <span className="text-[13px] text-text-2">
               <b className="mono font-semibold text-text">{photos.length}</b> photographs · avg overlap{' '}
-              <b className="mono font-semibold text-text">78%</b> · coverage{' '}
-              <b className="mono font-semibold text-text">96%</b>
+              <b className="mono font-semibold text-text">73%</b> · coverage{' '}
+              <b className="mono font-semibold text-text">90%</b>
             </span>
             <button
               type="button"

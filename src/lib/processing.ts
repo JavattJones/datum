@@ -13,7 +13,7 @@ export interface ProcessingPhase {
  */
 export const PROCESSING_PHASES: ProcessingPhase[] = [
   { title: 'Aligning photographs', sub: 'Detecting keypoints and estimating camera poses…' },
-  { title: 'Building dense point cloud', sub: 'Triangulating 2.1 M points from the overlap…' },
+  { title: 'Building dense point cloud', sub: 'Triangulating 5.8 M points from the overlap…' },
   { title: 'Building 3D mesh', sub: 'Reconstructing terrain surface and normals…' },
   { title: 'Projecting textures', sub: 'Mapping photographic color onto the geometry…' },
   { title: 'Georeferencing as-built', sub: 'Applying metric scale and coordinate system…' },
