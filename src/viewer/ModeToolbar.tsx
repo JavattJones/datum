@@ -46,6 +46,8 @@ export function ModeToolbar() {
 
   return (
     <div
+      role="group"
+      aria-label="Render mode"
       className="pointer-events-auto absolute left-1/2 top-4 flex -translate-x-1/2 gap-[3px] rounded-[6px] border border-stroke p-1 backdrop-blur"
       style={{ background: 'color-mix(in srgb, var(--panel) 86%, transparent)', boxShadow: 'var(--shadow)' }}
     >
@@ -57,7 +59,7 @@ export function ModeToolbar() {
             type="button"
             onClick={() => setViewMode(m.id)}
             aria-pressed={active}
-            className={`flex items-center gap-[7px] rounded-[6px] px-3.5 py-[7px] text-[12px] font-semibold transition-colors ${
+            className={`touch-target flex items-center justify-center gap-[7px] rounded-[6px] px-3.5 py-[7px] text-[12px] font-semibold transition-colors ${
               active ? 'text-on-accent' : 'text-text-3 hover:text-text'
             }`}
             style={active ? { background: 'var(--accent)' } : undefined}

@@ -18,7 +18,7 @@ function Tool({
       onClick={onClick}
       aria-label={label}
       aria-pressed={pressed}
-      className="group relative grid h-9 w-9 place-items-center rounded-[8px] text-text-2 transition-colors hover:bg-panel-2 hover:text-text aria-pressed:text-accent"
+      className="touch-target group relative grid h-9 w-9 place-items-center rounded-[8px] text-text-2 transition-colors hover:bg-panel-2 hover:text-text aria-pressed:text-accent"
       style={pressed ? { background: 'var(--accent-soft)', color: 'var(--accent)' } : undefined}
     >
       <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none">
@@ -57,9 +57,11 @@ const VIEW_BUTTONS: { view: CameraView; label: string; icon: ReactNode }[] = [
   },
 ]
 
-function Bar({ side, children }: { side: 'tl' | 'tr'; children: ReactNode }) {
+function Bar({ side, label, children }: { side: 'tl' | 'tr'; label: string; children: ReactNode }) {
   return (
     <div
+      role="group"
+      aria-label={label}
       className={`pointer-events-auto absolute top-4 flex gap-1 rounded-[6px] border border-stroke p-[5px] backdrop-blur ${
         side === 'tl' ? 'left-4' : 'right-4'
       }`}
@@ -74,7 +76,7 @@ function Bar({ side, children }: { side: 'tl' | 'tr'; children: ReactNode }) {
 export function ViewsToolbar() {
   const requestView = useAppStore((s) => s.requestView)
   return (
-    <Bar side="tl">
+    <Bar side="tl" label="Camera views">
       {VIEW_BUTTONS.map((b) => (
         <Tool key={b.view} label={b.label} onClick={() => requestView(b.view)}>
           {b.icon}
@@ -92,7 +94,7 @@ export function ActionsToolbar({ onFullscreen }: { onFullscreen: () => void }) {
   const toggleMeasureMode = useAppStore((s) => s.toggleMeasureMode)
 
   return (
-    <Bar side="tr">
+    <Bar side="tr" label="Viewer actions">
       <Tool label="Auto-orbit" pressed={autoRotate} onClick={toggleAutoRotate}>
         <path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
       </Tool>
