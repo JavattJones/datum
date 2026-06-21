@@ -33,3 +33,23 @@
   mid-orientation; the leader implemented directly to avoid a costly re-spawn.
 - Next: feature 2 (`upload_screen`).
 
+---
+
+## 2026-06-21 — Feature 2 (upload_screen) DONE
+
+- Upload screen recreated pixel-perfect vs `01-upload.png` (Precision). Split
+  into `components/upload/`: `StepIndicator`, `Dropzone`, `ThumbGrid` (each
+  <200 lines); `UploadScreen` now composes them.
+- `Dropzone`: real drag & drop (`.drag` accent state on dragenter/over,
+  cleared on leave/drop), Select photos (primary, camera icon) + Use sample
+  set (ghost), hint row (3 accent checks). Icon box panel-2 + stroke per ref.
+- `ThumbGrid`: 4:3 tiles with a deterministic (mulberry32-seeded) procedural
+  aerial canvas preview, IMG_xxxx mono label + accent check, staggered
+  `thumb-pop` animation (new keyframe in `index.css`).
+- Upload foot: count/overlap/coverage meta (mono numerals) + Reconstruct 3D
+  model button → routes to processing.
+- Verified: `tsc --noEmit` + `npm run build` green. Visual captured via system
+  Chromium (`/opt/pw-browsers/chromium-1194`) since Playwright's bundled build
+  couldn't download in the sandbox — empty + thumbs + foot states all match.
+- Next: feature 3 (`processing_screen`).
+
