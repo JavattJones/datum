@@ -1,22 +1,36 @@
 import { useAppStore } from '@/store/appStore'
-import { PROCESSING_PHASES, useSimulatedProcessing } from '@/lib/processing'
+import { PROCESSING_PHASES, useReconstruction } from '@/lib/processing'
+import { pipeline } from '@/lib/pipeline'
 import { PhaseList } from '@/components/processing/PhaseList'
 
 const RING_LEN = 276.5 // 2π·44, the reference ring circumference
 
 /**
  * Phase 3 — Processing screen.
- * SVG progress ring + 5-phase step list, fed by an abstracted progress driver
- * (simulated here; backend polling/websocket in Phase 6).
+ * SVG progress ring + 5-phase step list, fed by the pipeline backend via
+ * polling (mock adapter offline). On completion it pulls the reconstruction
+ * result and advances to the viewer.
  * Reference: reference/design-handoff/README.md › SCREEN Processing.
  */
 export function ProcessingScreen() {
+  const jobId = useAppStore((s) => s.jobId)
   const progress = useAppStore((s) => s.processing.progress)
   const currentStep = useAppStore((s) => s.processing.currentStep)
   const setProcessing = useAppStore((s) => s.setProcessing)
+  const setResult = useAppStore((s) => s.setResult)
   const setScreen = useAppStore((s) => s.setScreen)
 
-  useSimulatedProcessing(setProcessing, () => setScreen('viewer'))
+  useReconstruction(
+    jobId,
+    setProcessing,
+    async () => {
+      if (!jobId) return
+      const result = await pipeline.getResult(jobId)
+      setResult(result)
+      setScreen('viewer')
+    },
+    (message) => console.error('[DATUM] reconstruction error:', message),
+  )
 
   const complete = progress >= 100
   const phase = PROCESSING_PHASES[currentStep]

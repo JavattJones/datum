@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { useAppStore, type Photo } from '@/store/appStore'
+import { pipeline } from '@/lib/pipeline'
 import { StepIndicator } from '@/components/upload/StepIndicator'
 import { Dropzone } from '@/components/upload/Dropzone'
 import { ThumbGrid } from '@/components/upload/ThumbGrid'
 
-/** Demo sample set — replaced by the real upload in Phase 6. */
+/** Demo sample set — used with the mock pipeline (no real files). */
 function makeSamplePhotos(n: number, start: number): Photo[] {
   return Array.from({ length: n }, (_, i) => ({
     id: crypto.randomUUID(),
@@ -13,17 +15,44 @@ function makeSamplePhotos(n: number, start: number): Photo[] {
 
 /**
  * Phase 2 — Upload screen.
- * Step indicator → hero → dropzone (real drag & drop) → thumb grid → upload foot.
+ * Step indicator → hero → dropzone (real drag & drop / file picker) → thumb
+ * grid → upload foot. Reconstruct posts the photos to the pipeline backend.
  * Reference: reference/design-handoff/README.md › SCREEN Upload.
  */
 export function UploadScreen() {
   const photos = useAppStore((s) => s.photos)
   const addPhotos = useAppStore((s) => s.addPhotos)
   const setScreen = useAppStore((s) => s.setScreen)
+  const setJob = useAppStore((s) => s.setJob)
+  const [submitting, setSubmitting] = useState(false)
 
-  // Demo: any add action loads the 18-photo sample set, once.
-  const handleAdd = () => {
+  // Real photos picked or dropped from disk (posted to the backend as files).
+  const handleFiles = (files: File[]) => {
+    addPhotos(
+      files.map((file) => ({
+        id: crypto.randomUUID(),
+        label: file.name.replace(/\.[^.]+$/, ''),
+        file,
+      })),
+    )
+  }
+
+  const handleSample = () => {
     if (photos.length === 0) addPhotos(makeSamplePhotos(18, photos.length))
+  }
+
+  // Post the photo set to the pipeline, then move to processing.
+  const handleReconstruct = async () => {
+    if (submitting || photos.length === 0) return
+    setSubmitting(true)
+    try {
+      const jobId = await pipeline.createJob(photos)
+      setJob(jobId)
+      setScreen('processing')
+    } catch (err) {
+      console.error('[DATUM] failed to start reconstruction:', err)
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -40,7 +69,7 @@ export function UploadScreen() {
           surface, elevations and contour lines, and georeferences it as an <em>as-built</em>.
         </p>
 
-        <Dropzone onAdd={handleAdd} />
+        <Dropzone onFiles={handleFiles} onSample={handleSample} />
 
         <ThumbGrid photos={photos} />
 
@@ -53,11 +82,12 @@ export function UploadScreen() {
             </span>
             <button
               type="button"
-              onClick={() => setScreen('processing')}
-              className="inline-flex items-center gap-[9px] rounded-[var(--radius-token)] px-5 py-[11px] text-[14px] font-semibold text-on-accent transition-[filter] hover:brightness-105"
+              onClick={handleReconstruct}
+              disabled={submitting}
+              className="inline-flex items-center gap-[9px] rounded-[var(--radius-token)] px-5 py-[11px] text-[14px] font-semibold text-on-accent transition-[filter] hover:brightness-105 disabled:opacity-70"
               style={{ background: 'var(--accent)', boxShadow: '0 0 0 1px var(--accent-line), 0 6px 20px var(--accent-soft)' }}
             >
-              Reconstruct 3D model
+              {submitting ? 'Uploading…' : 'Reconstruct 3D model'}
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14m-6-6 6 6-6 6" />
               </svg>

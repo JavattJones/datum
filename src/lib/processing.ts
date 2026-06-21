@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { pipeline } from '@/lib/pipeline'
 
 /** One reconstruction phase shown on the Processing screen. */
 export interface ProcessingPhase {
@@ -18,10 +19,10 @@ export const PROCESSING_PHASES: ProcessingPhase[] = [
   { title: 'Georeferencing as-built', sub: 'Applying metric scale and coordinate system…' },
 ]
 
-/** Simulated total reconstruction time (ms). */
-export const PROCESSING_TOTAL_MS = 5000
 /** Pause on 100% before advancing to the viewer (ms). */
 const SETTLE_MS = 420
+/** How often the screen polls the backend for progress (ms). */
+const POLL_MS = 180
 
 interface ProgressTick {
   /** 0–100. */
@@ -31,40 +32,49 @@ interface ProgressTick {
 }
 
 /**
- * Simulated progress driver — a stand-in for backend polling/websocket
- * (wired in Phase 6). Drives `onTick` each frame from 0→100% over
- * `PROCESSING_TOTAL_MS`, then calls `onComplete` after a short settle.
+ * Reconstruction progress driver. Polls the pipeline backend for `jobId` and
+ * pushes each snapshot to `onTick`; on completion it settles briefly then calls
+ * `onComplete`. The mock adapter drives the same ~5s curve offline, so the
+ * Processing screen behaves identically with or without a real backend.
  */
-export function useSimulatedProcessing(
+export function useReconstruction(
+  jobId: string | null,
   onTick: (tick: ProgressTick) => void,
   onComplete: () => void,
+  onError?: (message: string) => void,
 ) {
   useEffect(() => {
-    const start = performance.now()
-    let raf = 0
-    let settle = 0
+    if (!jobId) return
+    let active = true
+    let timer = 0
 
-    const frame = (now: number) => {
-      const progress = Math.min(100, ((now - start) / PROCESSING_TOTAL_MS) * 100)
-      const currentStep = Math.min(
-        PROCESSING_PHASES.length - 1,
-        Math.floor((progress / 100) * PROCESSING_PHASES.length),
-      )
-      onTick({ progress, currentStep })
-
-      if (progress < 100) {
-        raf = requestAnimationFrame(frame)
-      } else {
-        settle = window.setTimeout(onComplete, SETTLE_MS)
+    const poll = async () => {
+      if (!active) return
+      try {
+        const p = await pipeline.getProgress(jobId)
+        if (!active) return
+        onTick({ progress: p.progress, currentStep: p.phase })
+        if (p.status === 'completed') {
+          timer = window.setTimeout(onComplete, SETTLE_MS)
+          return
+        }
+        if (p.status === 'failed') {
+          onError?.(p.message ?? 'Reconstruction failed')
+          return
+        }
+      } catch (err) {
+        onError?.(err instanceof Error ? err.message : 'Pipeline unreachable')
+        return
       }
+      timer = window.setTimeout(poll, POLL_MS)
     }
 
-    raf = requestAnimationFrame(frame)
+    poll()
     return () => {
-      cancelAnimationFrame(raf)
-      clearTimeout(settle)
+      active = false
+      clearTimeout(timer)
     }
-    // Run once on mount; callbacks are stable store actions.
+    // Re-run only when the job changes; callbacks are stable store actions.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [jobId])
 }
