@@ -42,7 +42,7 @@ export function TopBar() {
           style={{ background: 'var(--accent)', boxShadow: '0 0 8px var(--accent)' }}
         />
         <span>
-          Parcela <b className="font-semibold text-text">P-204</b> · Vega Norte
+          Plot <b className="font-semibold text-text">P-204</b> · Vega Norte
         </span>
       </div>
 
