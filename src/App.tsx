@@ -18,9 +18,12 @@ export default function App() {
     <div className="flex h-full flex-col">
       <TopBar />
       <main className="relative flex-1 overflow-hidden">
-        {screen === 'upload' && <UploadScreen />}
-        {screen === 'processing' && <ProcessingScreen />}
-        {screen === 'viewer' && <ViewerScreen />}
+        {/* key re-triggers the enter animation on every screen change */}
+        <div key={screen} className="screen-enter h-full">
+          {screen === 'upload' && <UploadScreen />}
+          {screen === 'processing' && <ProcessingScreen />}
+          {screen === 'viewer' && <ViewerScreen />}
+        </div>
       </main>
     </div>
   )
