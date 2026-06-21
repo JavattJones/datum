@@ -20,6 +20,7 @@
 import express from 'express'
 import cors from 'cors'
 import multer from 'multer'
+import rateLimit from 'express-rate-limit'
 import unzipper from 'unzipper'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -35,6 +36,45 @@ const JOBS_DIR = path.join(__dirname, '.jobs')
 
 fs.mkdirSync(JOBS_DIR, { recursive: true })
 fs.mkdirSync(path.join(JOBS_DIR, '.tmp'), { recursive: true })
+
+/* ------------------------------------------------------------------ */
+/* Security guards                                                      */
+/* ------------------------------------------------------------------ */
+
+/** NodeODM task IDs are always UUID v4. Reject anything else to block path traversal. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** Allowed export format values. */
+const VALID_FORMATS = new Set(['dxf', 'geojson', 'gltf', 'pdf'])
+
+/** Max total upload body (10 GB = 500 photos × 20 MB). */
+const UPLOAD_MAX_BYTES = 10 * 1024 * 1024 * 1024
+
+/** Validate :id is a UUID before touching the filesystem. */
+function requireValidId(req, res, next) {
+  if (!UUID_RE.test(req.params.id)) {
+    return res.status(400).json({ error: 'Invalid job id' })
+  }
+  next()
+}
+
+/** Reject uploads that advertise a Content-Length over UPLOAD_MAX_BYTES. */
+function checkUploadSize(req, res, next) {
+  const cl = parseInt(req.headers['content-length'] || '0', 10)
+  if (cl > UPLOAD_MAX_BYTES) {
+    return res.status(413).json({ error: 'Upload too large (max 10 GB per batch)' })
+  }
+  next()
+}
+
+/** Rate-limit job creation: 10 jobs per IP per 5 minutes. */
+const jobLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many reconstruction jobs. Try again in 5 minutes.' },
+})
 
 const app = express()
 app.use(cors())
@@ -65,7 +105,7 @@ const ODM_STATUS = { 10: 'queued', 20: 'running', 30: 'failed', 40: 'completed',
 /* ------------------------------------------------------------------ */
 
 /** POST /api/jobs — init a new reconstruction job, return its UUID. */
-app.post('/api/jobs', async (req, res) => {
+app.post('/api/jobs', jobLimiter, async (req, res) => {
   try {
     const r = await odm('/task/new/init', { method: 'POST' })
     const { uuid } = await r.json()
@@ -82,7 +122,7 @@ app.post('/api/jobs', async (req, res) => {
  * Large batches (100+ photos at ~15 MB each) can take several minutes.
  * The browser shows "Uploading…" during this time.
  */
-app.post('/api/jobs/:id/photos', upload.array('images'), async (req, res) => {
+app.post('/api/jobs/:id/photos', requireValidId, checkUploadSize, upload.array('images'), async (req, res) => {
   const { id } = req.params
   const files = req.files || []
   try {
@@ -106,7 +146,7 @@ app.post('/api/jobs/:id/photos', upload.array('images'), async (req, res) => {
  * POST /api/jobs/:id/start — commit the task and begin reconstruction.
  * Enables glTF output so the .glb can be extracted from textured_model.zip.
  */
-app.post('/api/jobs/:id/start', async (req, res) => {
+app.post('/api/jobs/:id/start', requireValidId, async (req, res) => {
   const { id } = req.params
   try {
     await odm(`/task/new/commit/${id}`, {
@@ -129,7 +169,7 @@ app.post('/api/jobs/:id/start', async (req, res) => {
 })
 
 /** GET /api/jobs/:id/progress — proxy a single NodeODM progress snapshot. */
-app.get('/api/jobs/:id/progress', async (req, res) => {
+app.get('/api/jobs/:id/progress', requireValidId, async (req, res) => {
   const { id } = req.params
   try {
     const r = await odm(`/task/${id}/info`)
@@ -151,7 +191,7 @@ app.get('/api/jobs/:id/progress', async (req, res) => {
  * First call: downloads textured_model.zip (~100 MB–2 GB) and extracts .glb.
  * Subsequent calls: served from local cache in server/.jobs/<id>/.
  */
-app.get('/api/jobs/:id/result', async (req, res) => {
+app.get('/api/jobs/:id/result', requireValidId, async (req, res) => {
   const { id } = req.params
   const jobDir = path.join(JOBS_DIR, id)
   const metricsPath = path.join(jobDir, 'metrics.json')
@@ -250,7 +290,7 @@ app.get('/api/jobs/:id/result', async (req, res) => {
 })
 
 /** GET /api/jobs/:id/model — serve the cached .glb to the Three.js viewer. */
-app.get('/api/jobs/:id/model', (req, res) => {
+app.get('/api/jobs/:id/model', requireValidId, (req, res) => {
   const modelPath = path.join(JOBS_DIR, req.params.id, 'model.glb')
   if (!fs.existsSync(modelPath)) {
     return res.status(404).json({ error: 'Model not ready — call /result first' })
@@ -260,8 +300,11 @@ app.get('/api/jobs/:id/model', (req, res) => {
 })
 
 /** GET /api/jobs/:id/export/:format — export the reconstruction in various formats. */
-app.get('/api/jobs/:id/export/:format', async (req, res) => {
+app.get('/api/jobs/:id/export/:format', requireValidId, async (req, res) => {
   const { id, format } = req.params
+  if (!VALID_FORMATS.has(format)) {
+    return res.status(400).json({ error: `Unknown export format: ${format}` })
+  }
   const metricsPath = path.join(JOBS_DIR, id, 'metrics.json')
   try {
     const { model, georef } = JSON.parse(await readFile(metricsPath, 'utf8'))
