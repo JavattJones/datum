@@ -39,8 +39,9 @@ export interface ExportArtifact {
 export interface PipelineAdapter {
   /** Identifier for diagnostics ("webodm", "mock", …). */
   readonly id: string
-  /** Post the photo set, returning a job id to poll. */
-  createJob(photos: Photo[]): Promise<string>
+  /** Post the photo set, returning a job id to poll.
+   *  `onUploadProgress` fires with 0–100 during the upload phase. */
+  createJob(photos: Photo[], onUploadProgress?: (pct: number) => void): Promise<string>
   /** One progress snapshot (screens poll this until completed/failed). */
   getProgress(jobId: string): Promise<JobProgress>
   /** Fetch the finished mesh + metrics once status is `completed`. */

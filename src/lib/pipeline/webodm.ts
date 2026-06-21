@@ -49,7 +49,8 @@ export class WebodmAdapter implements PipelineAdapter {
     return `${this.cfg.api}/api/projects/${this.cfg.project}/tasks/${jobId}`
   }
 
-  async createJob(photos: Photo[]): Promise<string> {
+  async createJob(photos: Photo[], onUploadProgress?: (pct: number) => void): Promise<string> {
+    onUploadProgress?.(0)
     const form = new FormData()
     for (const p of photos) {
       if (p.file) form.append('images', p.file, p.file.name)
@@ -61,6 +62,7 @@ export class WebodmAdapter implements PipelineAdapter {
     })
     if (!res.ok) throw new Error(`WebODM createJob failed (${res.status})`)
     const task = (await res.json()) as { id: string }
+    onUploadProgress?.(100)
     return task.id
   }
 

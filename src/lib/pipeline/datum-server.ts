@@ -24,30 +24,41 @@ export class DatumServerAdapter implements PipelineAdapter {
   }
 
   /**
-   * Creates a job, uploads all photos, and starts reconstruction.
-   * Returns the job UUID to poll with getProgress().
+   * Creates a job, uploads all photos in batches (20/batch) with real byte-level
+   * XHR progress, then starts the reconstruction. Returns the job UUID.
    */
-  async createJob(photos: Photo[]): Promise<string> {
+  async createJob(photos: Photo[], onUploadProgress?: (pct: number) => void): Promise<string> {
+    onUploadProgress?.(0)
+
     // 1 — Init task
     const initRes = await fetch(this.url('/api/jobs'), { method: 'POST' })
     if (!initRes.ok) throw new Error(`Failed to create job (${initRes.status})`)
     const { jobId } = (await initRes.json()) as { jobId: string }
 
-    // 2 — Upload all photo files (may take minutes for large sets)
-    const form = new FormData()
-    for (const p of photos) {
-      if (p.file) form.append('images', p.file, p.file.name)
-    }
-    const uploadRes = await fetch(this.url(`/api/jobs/${jobId}/photos`), {
-      method: 'POST',
-      body: form,
-    })
-    if (!uploadRes.ok) {
-      const err = (await uploadRes.json().catch(() => ({ error: uploadRes.statusText }))) as {
-        error: string
+    // 2 — Batch upload with XHR so we get real byte-level progress per batch
+    const toUpload = photos.filter((p) => p.file)
+    if (toUpload.length > 0) {
+      const BATCH = 20
+      const batches: Photo[][] = []
+      for (let i = 0; i < toUpload.length; i += BATCH) {
+        batches.push(toUpload.slice(i, i + BATCH))
       }
-      throw new Error(`Photo upload failed: ${err.error}`)
+
+      for (let b = 0; b < batches.length; b++) {
+        await this.postBatch(
+          this.url(`/api/jobs/${jobId}/photos`),
+          batches[b],
+          (loaded, total) => {
+            // Map this batch's byte progress into the 0–90 range across all batches
+            const batchBase = (b / batches.length) * 90
+            const batchSpan = (1 / batches.length) * 90
+            onUploadProgress?.(Math.round(batchBase + (loaded / total) * batchSpan))
+          },
+        )
+      }
     }
+
+    onUploadProgress?.(95)
 
     // 3 — Start reconstruction
     const startRes = await fetch(this.url(`/api/jobs/${jobId}/start`), { method: 'POST' })
@@ -58,7 +69,41 @@ export class DatumServerAdapter implements PipelineAdapter {
       throw new Error(`Failed to start reconstruction: ${err.error}`)
     }
 
+    onUploadProgress?.(100)
     return jobId
+  }
+
+  /** Upload one batch of photo files via XHR for byte-level progress tracking. */
+  private postBatch(
+    url: string,
+    photos: Photo[],
+    onProgress: (loaded: number, total: number) => void,
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const form = new FormData()
+      for (const p of photos) {
+        if (p.file) form.append('images', p.file, p.file.name)
+      }
+      const xhr = new XMLHttpRequest()
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) onProgress(e.loaded, e.total)
+      })
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve()
+        } else {
+          try {
+            const body = JSON.parse(xhr.responseText) as { error?: string }
+            reject(new Error(body.error ?? `Upload failed (${xhr.status})`))
+          } catch {
+            reject(new Error(`Upload failed (${xhr.status})`))
+          }
+        }
+      })
+      xhr.addEventListener('error', () => reject(new Error('Upload network error')))
+      xhr.open('POST', url)
+      xhr.send(form)
+    })
   }
 
   async getProgress(jobId: string): Promise<JobProgress> {

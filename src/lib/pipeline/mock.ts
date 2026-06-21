@@ -28,7 +28,8 @@ export class MockAdapter implements PipelineAdapter {
   readonly id = 'mock'
   private starts = new Map<string, number>()
 
-  async createJob(): Promise<string> {
+  async createJob(_photos?: unknown, onUploadProgress?: (pct: number) => void): Promise<string> {
+    onUploadProgress?.(100)
     const jobId = `mock-${Date.now().toString(36)}`
     this.starts.set(jobId, performance.now())
     return jobId

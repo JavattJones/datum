@@ -25,8 +25,10 @@ export function UploadScreen() {
   const setScreen = useAppStore((s) => s.setScreen)
   const setJob = useAppStore((s) => s.setJob)
   const [submitting, setSubmitting] = useState(false)
+  /** -1 = idle; 0–100 = uploading with real progress */
+  const [uploadPct, setUploadPct] = useState(-1)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
-  // Real photos picked or dropped from disk (posted to the backend as files).
   const handleFiles = (files: File[]) => {
     addPhotos(
       files.map((file) => ({
@@ -35,25 +37,32 @@ export function UploadScreen() {
         file,
       })),
     )
+    setUploadError(null)
   }
 
   const handleSample = () => {
     if (photos.length === 0) addPhotos(makeSamplePhotos(18, photos.length))
+    setUploadError(null)
   }
 
-  // Post the photo set to the pipeline, then move to processing.
   const handleReconstruct = async () => {
     if (submitting || photos.length === 0) return
     setSubmitting(true)
+    setUploadPct(0)
+    setUploadError(null)
     try {
-      const jobId = await pipeline.createJob(photos)
+      const jobId = await pipeline.createJob(photos, (pct) => setUploadPct(pct))
       setJob(jobId)
       setScreen('processing')
     } catch (err) {
-      console.error('[DATUM] failed to start reconstruction:', err)
+      const msg = err instanceof Error ? err.message : 'Upload failed'
+      setUploadError(msg)
       setSubmitting(false)
+      setUploadPct(-1)
     }
   }
+
+  const uploading = submitting && uploadPct >= 0
 
   return (
     <div className="h-full overflow-y-auto">
@@ -75,25 +84,78 @@ export function UploadScreen() {
 
         {photos.length > 0 && (
           <div className="mt-[30px] flex flex-wrap items-center justify-between gap-4">
-            <span className="text-[13px] text-text-2">
-              <b className="mono font-semibold text-text">{photos.length}</b> photographs · avg overlap{' '}
-              <b className="mono font-semibold text-text">78%</b> · coverage{' '}
-              <b className="mono font-semibold text-text">96%</b>
-            </span>
-            <button
-              type="button"
-              onClick={handleReconstruct}
-              disabled={submitting}
-              className="inline-flex items-center gap-[9px] rounded-[var(--radius-token)] px-5 py-[11px] text-[14px] font-semibold text-on-accent transition-[filter] hover:brightness-105 disabled:opacity-70"
-              style={{ background: 'var(--accent)', boxShadow: '0 0 0 1px var(--accent-line), 0 6px 20px var(--accent-soft)' }}
-            >
-              {submitting ? 'Uploading…' : 'Reconstruct 3D model'}
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14m-6-6 6 6-6 6" />
-              </svg>
-            </button>
+            <div className="flex flex-col gap-1">
+              <span className="text-[13px] text-text-2">
+                <b className="mono font-semibold text-text">{photos.length}</b> photographs · avg
+                overlap <b className="mono font-semibold text-text">78%</b> · coverage{' '}
+                <b className="mono font-semibold text-text">96%</b>
+              </span>
+              {uploadError && (
+                <span className="text-[12px]" style={{ color: 'var(--danger)' }}>
+                  {uploadError}
+                </span>
+              )}
+            </div>
+
+            {uploading ? (
+              <UploadProgress pct={uploadPct} />
+            ) : (
+              <button
+                type="button"
+                onClick={handleReconstruct}
+                disabled={submitting}
+                className="inline-flex items-center gap-[9px] rounded-[var(--radius-token)] px-5 py-[11px] text-[14px] font-semibold text-on-accent transition-[filter] hover:brightness-105 disabled:opacity-70"
+                style={{
+                  background: 'var(--accent)',
+                  boxShadow: '0 0 0 1px var(--accent-line), 0 6px 20px var(--accent-soft)',
+                }}
+              >
+                Reconstruct 3D model
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M5 12h14m-6-6 6 6-6 6" />
+                </svg>
+              </button>
+            )}
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+/** Compact progress bar shown in place of the Reconstruct button while uploading. */
+function UploadProgress({ pct }: { pct: number }) {
+  const label = pct >= 100 ? 'Starting reconstruction…' : 'Uploading photos…'
+  // Keep the bar at least 4% wide so it's visible at the very start
+  const barW = Math.max(pct, 4)
+
+  return (
+    <div className="flex min-w-[220px] flex-col gap-[7px]">
+      <div className="flex items-center justify-between gap-4">
+        <span className="text-[13px] text-text-2">{label}</span>
+        <span className="mono text-[13px] font-semibold text-accent">{pct}%</span>
+      </div>
+      <div
+        className="h-[3px] w-full overflow-hidden rounded-full"
+        style={{ background: 'var(--stroke)' }}
+      >
+        <div
+          className="h-full rounded-full"
+          style={{
+            width: `${barW}%`,
+            background: 'var(--accent)',
+            transition: 'width 150ms ease-out',
+          }}
+        />
       </div>
     </div>
   )
