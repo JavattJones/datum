@@ -1,31 +1,17 @@
 import { useState } from 'react'
-import { useAppStore, type Photo } from '@/store/appStore'
+import { useAppStore } from '@/store/appStore'
 import { pipeline } from '@/lib/pipeline'
+import { sampleSet } from '@/lib/sampleSet'
 import { StepIndicator } from '@/components/upload/StepIndicator'
 import { Dropzone } from '@/components/upload/Dropzone'
 import { ThumbGrid } from '@/components/upload/ThumbGrid'
 
-/** Demo sample set — used with the mock pipeline (no real files). */
-function makeSamplePhotos(n: number, start: number): Photo[] {
-  return Array.from({ length: n }, (_, i) => ({
-    id: crypto.randomUUID(),
-    label: `IMG_${String(2040 + start + i).padStart(4, '0')}`,
-  }))
-}
-
-/**
- * Phase 2 — Upload screen.
- * Step indicator → hero → dropzone (real drag & drop / file picker) → thumb
- * grid → upload foot. Reconstruct posts the photos to the pipeline backend.
- * Reference: reference/design-handoff/README.md › SCREEN Upload.
- */
 export function UploadScreen() {
   const photos = useAppStore((s) => s.photos)
   const addPhotos = useAppStore((s) => s.addPhotos)
   const setScreen = useAppStore((s) => s.setScreen)
   const setJob = useAppStore((s) => s.setJob)
   const [submitting, setSubmitting] = useState(false)
-  /** -1 = idle; 0–100 = uploading with real progress */
   const [uploadPct, setUploadPct] = useState(-1)
   const [uploadError, setUploadError] = useState<string | null>(null)
 
@@ -41,7 +27,7 @@ export function UploadScreen() {
   }
 
   const handleSample = () => {
-    if (photos.length === 0) addPhotos(makeSamplePhotos(18, photos.length))
+    if (photos.length === 0) addPhotos(sampleSet())
     setUploadError(null)
   }
 
@@ -87,8 +73,8 @@ export function UploadScreen() {
             <div className="flex flex-col gap-1">
               <span className="text-[13px] text-text-2">
                 <b className="mono font-semibold text-text">{photos.length}</b> photographs · avg
-                overlap <b className="mono font-semibold text-text">78%</b> · coverage{' '}
-                <b className="mono font-semibold text-text">96%</b>
+                overlap <b className="mono font-semibold text-text">73%</b> · coverage{' '}
+                <b className="mono font-semibold text-text">90%</b>
               </span>
               {uploadError && (
                 <span className="text-[12px]" style={{ color: 'var(--danger)' }}>
@@ -111,16 +97,7 @@ export function UploadScreen() {
                 }}
               >
                 Reconstruct 3D model
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14m-6-6 6 6-6 6" />
                 </svg>
               </button>
@@ -132,29 +109,18 @@ export function UploadScreen() {
   )
 }
 
-/** Compact progress bar shown in place of the Reconstruct button while uploading. */
 function UploadProgress({ pct }: { pct: number }) {
   const label = pct >= 100 ? 'Starting reconstruction…' : 'Uploading photos…'
-  // Keep the bar at least 4% wide so it's visible at the very start
-  const barW = Math.max(pct, 4)
-
   return (
     <div className="flex min-w-[220px] flex-col gap-[7px]">
       <div className="flex items-center justify-between gap-4">
         <span className="text-[13px] text-text-2">{label}</span>
         <span className="mono text-[13px] font-semibold text-accent">{pct}%</span>
       </div>
-      <div
-        className="h-[3px] w-full overflow-hidden rounded-full"
-        style={{ background: 'var(--stroke)' }}
-      >
+      <div className="h-[3px] w-full overflow-hidden rounded-full" style={{ background: 'var(--stroke)' }}>
         <div
           className="h-full rounded-full"
-          style={{
-            width: `${barW}%`,
-            background: 'var(--accent)',
-            transition: 'width 150ms ease-out',
-          }}
+          style={{ width: `${Math.max(pct, 4)}%`, background: 'var(--accent)', transition: 'width 150ms ease-out' }}
         />
       </div>
     </div>
