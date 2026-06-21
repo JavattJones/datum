@@ -51,7 +51,7 @@
         "Visual match against screenshots/01-upload.png (Precision)"
       ],
       "reference_shot": "reference/design-handoff/screenshots/01-upload.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 3,

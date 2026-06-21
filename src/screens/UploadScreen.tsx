@@ -1,99 +1,64 @@
 import { useAppStore, type Photo } from '@/store/appStore'
+import { StepIndicator } from '@/components/upload/StepIndicator'
+import { Dropzone } from '@/components/upload/Dropzone'
+import { ThumbGrid } from '@/components/upload/ThumbGrid'
 
-const STEPS = ['Capture', 'Process', '3D Model'] as const
-
-function makeSamplePhotos(n: number): Photo[] {
+/** Demo sample set — replaced by the real upload in Phase 6. */
+function makeSamplePhotos(n: number, start: number): Photo[] {
   return Array.from({ length: n }, (_, i) => ({
     id: crypto.randomUUID(),
-    label: `IMG_${2040 + i}`,
+    label: `IMG_${String(2040 + start + i).padStart(4, '0')}`,
   }))
 }
 
 /**
- * Phase 2 — Upload screen (scaffold).
- * TODO: real drag & drop, thumb grid with canvas previews, upload foot meta.
+ * Phase 2 — Upload screen.
+ * Step indicator → hero → dropzone (real drag & drop) → thumb grid → upload foot.
+ * Reference: reference/design-handoff/README.md › SCREEN Upload.
  */
 export function UploadScreen() {
   const photos = useAppStore((s) => s.photos)
   const addPhotos = useAppStore((s) => s.addPhotos)
   const setScreen = useAppStore((s) => s.setScreen)
 
+  // Demo: any add action loads the 18-photo sample set, once.
+  const handleAdd = () => {
+    if (photos.length === 0) addPhotos(makeSamplePhotos(18, photos.length))
+  }
+
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto max-w-[1060px] px-7 pb-16 pt-12">
-        {/* Step indicator */}
-        <div className="mono mb-10 flex items-center gap-3 text-[12px]">
-          {STEPS.map((step, i) => (
-            <div key={step} className="flex items-center gap-3">
-              <span className={i === 0 ? 'text-accent' : 'text-text-3'}>
-                <span
-                  className="mr-2 inline-grid h-5 w-5 place-items-center rounded-full border"
-                  style={{ borderColor: i === 0 ? 'var(--accent)' : 'var(--stroke-2)' }}
-                >
-                  {i + 1}
-                </span>
-                {step}
-              </span>
-              {i < STEPS.length - 1 && <span className="h-px w-8 bg-stroke-2" />}
-            </div>
-          ))}
-        </div>
+      <div className="mx-auto w-full max-w-[1060px] px-7 pb-16 pt-[52px]">
+        <StepIndicator active={0} />
 
-        <p className="mono mb-3 text-[12px] uppercase tracking-[0.16em] text-accent">
-          New survey
-        </p>
-        <h1 className="max-w-[16ch] text-[clamp(30px,4.4vw,46px)] font-[680] leading-[1.04] tracking-[-0.025em]">
+        <p className="mono mb-3.5 text-[12px] uppercase tracking-[0.16em] text-accent">New survey</p>
+        <h1 className="mb-4 max-w-[16ch] text-[clamp(30px,4.4vw,46px)] font-[680] leading-[1.04] tracking-[-0.025em]">
           From photographs to a measurable model.
         </h1>
-        <p className="mt-4 max-w-[52ch] text-[16px] leading-[1.55] text-text-2">
-          Upload your site photos and DATUM reconstructs a metric 3D model, ready to navigate,
-          measure and georeference as an <em>as-built</em>.
+        <p className="mb-[38px] max-w-[52ch] text-[16px] leading-[1.55] text-text-2">
+          Upload the flight or field image set. DATUM reconstructs the plot's 3D mesh, computes
+          surface, elevations and contour lines, and georeferences it as an <em>as-built</em>.
         </p>
 
-        {/* Dropzone (scaffold) */}
-        <div
-          className="mt-9 grid place-items-center rounded-[var(--radius-token)] px-8 py-12 text-center"
-          style={{ border: '1.5px dashed var(--stroke-2)' }}
-        >
-          <div
-            className="grid h-14 w-14 place-items-center rounded-[14px] text-accent"
-            style={{ background: 'var(--accent-soft)' }}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-              <path d="M12 16V4m0 0 4 4m-4-4-4 4" />
-              <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
-            </svg>
-          </div>
-          <h3 className="mt-4 text-[17px] font-semibold">Drop your photographs here</h3>
-          <p className="mono mt-1 text-[12px] text-text-3">
-            JPG, PNG or RAW · 40–300 overlapping shots recommended
-          </p>
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => addPhotos(makeSamplePhotos(18))}
-              className="mono rounded-[var(--radius-token)] px-5 py-2.5 text-[13px] font-medium text-on-accent"
-              style={{ background: 'var(--accent)' }}
-            >
-              Use sample set
-            </button>
-          </div>
-        </div>
+        <Dropzone onAdd={handleAdd} />
 
-        {/* Upload foot */}
+        <ThumbGrid photos={photos} />
+
         {photos.length > 0 && (
-          <div className="mt-6 flex items-center justify-between rounded-[var(--radius-token)] border border-stroke bg-panel px-5 py-4">
-            <span className="mono text-[12px] text-text-2">
-              {photos.length} photographs · avg overlap 78% · coverage 96%
+          <div className="mt-[30px] flex flex-wrap items-center justify-between gap-4">
+            <span className="text-[13px] text-text-2">
+              <b className="mono font-semibold text-text">{photos.length}</b> photographs · avg overlap{' '}
+              <b className="mono font-semibold text-text">78%</b> · coverage{' '}
+              <b className="mono font-semibold text-text">96%</b>
             </span>
             <button
               type="button"
               onClick={() => setScreen('processing')}
-              className="mono flex items-center gap-2 rounded-[var(--radius-token)] px-5 py-2.5 text-[13px] font-medium text-on-accent"
-              style={{ background: 'var(--accent)' }}
+              className="inline-flex items-center gap-[9px] rounded-[var(--radius-token)] px-5 py-[11px] text-[14px] font-semibold text-on-accent transition-[filter] hover:brightness-105"
+              style={{ background: 'var(--accent)', boxShadow: '0 0 0 1px var(--accent-line), 0 6px 20px var(--accent-soft)' }}
             >
               Reconstruct 3D model
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14m-6-6 6 6-6 6" />
               </svg>
             </button>
