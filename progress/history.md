@@ -97,3 +97,27 @@
 - Note: Inspector panel left as the existing scaffold (that's feature 5).
 - Next: feature 5 (`inspector`).
 
+---
+
+## 2026-06-21 — Feature 5 (inspector) DONE
+
+- Full Inspector built vs `03-viewer.png` + theme-topo/studio. Replaced the
+  ViewerScreen scaffold with `components/inspector/`:
+  - `Section` (shared accent-iconed label + `fmtInt`), `SurfaceCard`,
+    `DimGrid` (2×3), `PrecisionCard` (RMSE→0–5cm bar, GSD + mesh points),
+    `LocationMap`, `LayerList`, `Inspector` (orchestrator).
+- `LocationMap`: schematic city map ported to a `<canvas>` (streets/blocks/
+  river/parcel polygon), pin overlay, mono coords, Relocate cycling 4 cities
+  via store `location`/`cycleLocation`; redraws on location + theme change.
+- `LayerList`: 3 toggles bound to store `layers` — same source the viewer
+  reads, so panel and scene stay in sync.
+- `Inspector` footer: New (→ reset to upload) + Export As-built with simulated
+  generating-spinner → "Exported" → idle cycle (1.4s/1.6s).
+- Mobile bottom sheet (<880px): `.insp-sheet` media query in index.css
+  (translateY(calc(100%-52px)) → .open translateY(0), 56% height) + grab tab.
+  ViewerScreen switched to the 880px breakpoint and a relative wrapper.
+- Verified: `tsc --noEmit` + `npm run build` green. Captured desktop inspector,
+  relocate (→ Sevilla), mobile sheet open/closed, and Topo + Studio themes —
+  all match. Layer toggles drive the scene live.
+- Next: feature 6 (`real_integration`) — backend wiring (Phase 6).
+
