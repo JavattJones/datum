@@ -98,7 +98,11 @@ export function LocationMap() {
   const location = useAppStore((s) => s.location)
   const cycleLocation = useAppStore((s) => s.cycleLocation)
   const theme = useAppStore((s) => s.theme)
+  const georef = useAppStore((s) => s.georef)
   const ref = useRef<HTMLCanvasElement>(null)
+
+  // No GPS/EXIF data → the pipeline couldn't georeference the model.
+  const hasGps = georef !== null
 
   useEffect(() => {
     if (ref.current) drawMap(ref.current, location)
@@ -109,10 +113,23 @@ export function LocationMap() {
     lon >= 0 ? 'E' : 'W'
   }`
 
+  if (!hasGps) {
+    return (
+      <Section icon={ICON} label="Location · As-built">
+        <div className="rounded-[10px] border border-dashed border-stroke-2 bg-panel px-4 py-6 text-center">
+          <p className="mono text-[12px] text-text-2">No GPS / EXIF data</p>
+          <p className="mt-1.5 text-[11px] text-text-3">
+            Add ground control points to georeference this as-built.
+          </p>
+        </div>
+      </Section>
+    )
+  }
+
   return (
     <Section icon={ICON} label="Location · As-built">
       <div className="relative overflow-hidden rounded-[10px] border border-stroke">
-        <canvas ref={ref} width={600} height={260} className="block h-[130px] w-full" />
+        <canvas ref={ref} width={600} height={260} className="block h-[130px] w-full" role="img" aria-label="As-built location map" />
         <div className="pointer-events-none absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-full text-accent">
           <svg className="h-[26px] w-[26px]" viewBox="0 0 24 24" fill="currentColor" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,.4))' }}>
             <path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7Zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5Z" />

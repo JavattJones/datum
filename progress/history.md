@@ -152,3 +152,28 @@
   reachable in this sandbox).
 - Next: feature 7 (`polish`).
 
+---
+
+## 2026-06-21 — Feature 7 (polish) DONE — project complete (0–7)
+
+- a11y: global `:focus-visible` accent ring (mouse clicks stay clean);
+  `.touch-target` ≥44px on ≤600px for viewer tools / mode group / topbar help;
+  role="group"+aria-label on the mode group and both viewer toolbars; the map
+  canvas got role="img" + aria-label (aria-pressed was already on toggles).
+- Reduced motion: new `lib/useReducedMotion` hook; in the viewer it forces
+  auto-orbit off and makes camera view changes jump instantly. CSS already
+  zeroed finite animations under prefers-reduced-motion.
+- Performance: `<BakeShadows>` (camera orbits, scene is static → freeze the
+  shadow map), `<AdaptiveDpr pixelated>`, Canvas `performance={{min:.5}}` +
+  high-performance GL hint; procedural geometry/contours disposed on unmount;
+  the point cloud stays a single Points draw call shared across modes.
+- Error / empty states: ProcessingScreen shows a failure card (danger icon +
+  message + "Back to upload") on pipeline error; LocationMap shows a "No GPS /
+  EXIF data" empty state when georef is null; the upload reconstruct foot only
+  appears with photos (empty-state by design).
+- Verified: `tsc --noEmit` + `npm run build` green; viewer renders cleanly with
+  the perf changes (no errors), reduced-motion keeps the scene static, tablet
+  (768px) drops to the bottom sheet. Themes covered via tokens (feature 5).
+- All 7 features done. UI hi-fi complete; production path wired (feature 6),
+  mock fallback for offline dev.
+

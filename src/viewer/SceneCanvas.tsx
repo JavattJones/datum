@@ -1,10 +1,11 @@
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Line, Html, useGLTF } from '@react-three/drei'
+import { OrbitControls, Line, Html, useGLTF, BakeShadows, AdaptiveDpr } from '@react-three/drei'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import * as THREE from 'three'
 import { useAppStore, type CameraView, type ModelData } from '@/store/appStore'
 import { buildTerrain, type DimAnchor } from '@/viewer/terrain'
+import { useReducedMotion } from '@/lib/useReducedMotion'
 
 /** Camera pose per named view (position + orbit target). */
 const VIEWS: Record<CameraView, { pos: [number, number, number]; target: [number, number, number] }> = {
@@ -76,6 +77,16 @@ function ProceduralTerrain({ accent }: { accent: string }) {
   const viewMode = useAppStore((s) => s.viewMode)
   const layers = useAppStore((s) => s.layers)
   const { geometry, contours, corners, elevMin, anchors } = useMemo(() => buildTerrain(), [])
+
+  // Free GPU buffers when leaving the viewer (a single shared geometry across
+  // the three modes already keeps the point cloud to one draw call).
+  useEffect(
+    () => () => {
+      geometry.dispose()
+      contours.dispose()
+    },
+    [geometry, contours],
+  )
 
   return (
     <>
@@ -158,6 +169,7 @@ function Scene() {
   const { camera } = useThree()
   const controls = useRef<OrbitControlsImpl>(null)
   const accent = useAccent()
+  const reduced = useReducedMotion()
   const autoRotate = useAppStore((s) => s.autoRotate)
   const viewRequest = useAppStore((s) => s.viewRequest)
   const modelUrl = useAppStore((s) => s.modelUrl)
@@ -183,7 +195,8 @@ function Scene() {
   useFrame(() => {
     const a = anim.current
     if (a && controls.current) {
-      const k = Math.min(1, (performance.now() - a.t0) / 720)
+      // Reduced motion → jump straight to the target (no eased fly-through).
+      const k = reduced ? 1 : Math.min(1, (performance.now() - a.t0) / 720)
       const e = 1 - Math.pow(1 - k, 3)
       camera.position.lerpVectors(a.from, a.to, e)
       controls.current.target.lerpVectors(a.fromT, a.toT, e)
@@ -225,9 +238,13 @@ function Scene() {
         minDistance={4}
         maxDistance={22}
         maxPolarAngle={Math.PI * 0.49}
-        autoRotate={autoRotate}
+        autoRotate={autoRotate && !reduced}
         autoRotateSpeed={0.6}
       />
+
+      {/* Perf: shadows are static (camera orbits, scene doesn't) → bake them. */}
+      <BakeShadows />
+      <AdaptiveDpr pixelated />
     </>
   )
 }
@@ -237,8 +254,9 @@ export function SceneCanvas() {
     <Canvas
       shadows
       dpr={[1, 2]}
+      performance={{ min: 0.5 }}
       camera={{ position: VIEWS.iso.pos, fov: 42, near: 0.1, far: 100 }}
-      gl={{ antialias: true, alpha: true }}
+      gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       style={{
         position: 'absolute',
         inset: 0,
