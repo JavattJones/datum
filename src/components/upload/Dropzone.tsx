@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 const HINTS = ['GPS / EXIF detection', 'Automatic overlap', 'Real metric scale'] as const
 
@@ -10,13 +10,26 @@ function Check() {
   )
 }
 
+interface Props {
+  /** Real photos picked from disk or dropped (posted to the backend). */
+  onFiles: (files: File[]) => void
+  /** Load the demo sample set (mock pipeline). */
+  onSample: () => void
+}
+
 /**
- * Upload dropzone with real drag & drop. Dragging files over it applies the
- * `.drag` accent state; both the dropped files and the action buttons add the
- * demo sample set (no real upload until Phase 6). Reference: README › Dropzone.
+ * Upload dropzone with real drag & drop. Dragging files applies the `.drag`
+ * accent state; dropping or picking files posts them to the pipeline, while
+ * "Use sample set" loads the demo set. Reference: README › Dropzone.
  */
-export function Dropzone({ onAdd }: { onAdd: () => void }) {
+export function Dropzone({ onFiles, onSample }: Props) {
   const [drag, setDrag] = useState(false)
+  const input = useRef<HTMLInputElement>(null)
+
+  const handleFiles = (list: FileList | null) => {
+    const files = list ? Array.from(list).filter((f) => f.type.startsWith('image/')) : []
+    if (files.length) onFiles(files)
+  }
 
   return (
     <div
@@ -32,7 +45,8 @@ export function Dropzone({ onAdd }: { onAdd: () => void }) {
       onDrop={(e) => {
         e.preventDefault()
         setDrag(false)
-        onAdd()
+        if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files)
+        else onSample()
       }}
       className="relative flex flex-col items-center overflow-hidden rounded-[var(--radius-token)] bg-panel px-8 py-[46px] text-center transition-colors"
       style={{
@@ -56,9 +70,20 @@ export function Dropzone({ onAdd }: { onAdd: () => void }) {
       </p>
 
       <div className="flex flex-wrap justify-center gap-2.5">
+        <input
+          ref={input}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            handleFiles(e.target.files)
+            e.target.value = ''
+          }}
+        />
         <button
           type="button"
-          onClick={onAdd}
+          onClick={() => input.current?.click()}
           className="inline-flex items-center gap-[9px] rounded-[var(--radius-token)] px-5 py-[11px] text-[14px] font-semibold text-on-accent transition-[filter] hover:brightness-105"
           style={{ background: 'var(--accent)', boxShadow: '0 0 0 1px var(--accent-line), 0 6px 20px var(--accent-soft)' }}
         >
@@ -70,7 +95,7 @@ export function Dropzone({ onAdd }: { onAdd: () => void }) {
         </button>
         <button
           type="button"
-          onClick={onAdd}
+          onClick={onSample}
           className="inline-flex items-center rounded-[var(--radius-token)] border border-stroke-2 bg-panel px-5 py-[11px] text-[14px] font-semibold text-text transition-colors hover:border-text-3"
         >
           Use sample set

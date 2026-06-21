@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAppStore } from '@/store/appStore'
+import { pipeline, downloadArtifact, EXPORT_LABELS, type ExportFormat } from '@/lib/pipeline'
 import { SurfaceCard } from './SurfaceCard'
 import { DimGrid } from './DimGrid'
 import { PrecisionCard } from './PrecisionCard'
@@ -7,56 +8,82 @@ import { LocationMap } from './LocationMap'
 import { LayerList } from './LayerList'
 
 type ExportState = 'idle' | 'generating' | 'done'
+const FORMATS: ExportFormat[] = ['gltf', 'geojson', 'dxf', 'pdf']
 
-/** Export As-built button with a simulated generate → exported cycle. */
+/** Export As-built button: pick a format → backend produces & downloads it. */
 function ExportButton() {
+  const jobId = useAppStore((s) => s.jobId)
   const [state, setState] = useState<ExportState>('idle')
-  const timers = useRef<number[]>([])
+  const [open, setOpen] = useState(false)
+  const timer = useRef<number>(0)
 
-  useEffect(() => () => timers.current.forEach(clearTimeout), [])
+  useEffect(() => () => clearTimeout(timer.current), [])
 
-  const run = () => {
-    if (state !== 'idle') return
+  const run = async (format: ExportFormat) => {
+    setOpen(false)
+    if (state !== 'idle' || !jobId) return
     setState('generating')
-    timers.current.push(
-      window.setTimeout(() => {
-        setState('done')
-        timers.current.push(window.setTimeout(() => setState('idle'), 1600))
-      }, 1400),
-    )
+    try {
+      const artifact = await pipeline.exportAsset(jobId, format)
+      downloadArtifact(artifact)
+      setState('done')
+      timer.current = window.setTimeout(() => setState('idle'), 1600)
+    } catch (err) {
+      console.error('[DATUM] export failed:', err)
+      setState('idle')
+    }
   }
 
   return (
-    <button
-      type="button"
-      onClick={run}
-      className="flex flex-[1.4] items-center justify-center gap-2 rounded-[var(--radius-token)] py-2.5 text-[13px] font-semibold text-on-accent transition-[filter] hover:brightness-105"
-      style={{ background: 'var(--accent)', boxShadow: '0 0 0 1px var(--accent-line)' }}
-    >
-      {state === 'generating' ? (
-        <>
-          <span
-            className="h-[15px] w-[15px] animate-spin rounded-full"
-            style={{ border: '2px solid rgba(4,19,13,.3)', borderTopColor: '#04130d', animationDuration: '0.7s' }}
-          />
-          Generating…
-        </>
-      ) : state === 'done' ? (
-        <>
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
-            <path d="M5 12l5 5L20 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Exported
-        </>
-      ) : (
-        <>
-          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
-            <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Export As-built
-        </>
+    <div className="relative flex-[1.4]">
+      {open && state === 'idle' && (
+        <div
+          className="absolute bottom-[calc(100%+6px)] left-0 right-0 overflow-hidden rounded-[var(--radius-token)] border border-stroke bg-panel"
+          style={{ boxShadow: 'var(--shadow)' }}
+        >
+          {FORMATS.map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => run(f)}
+              className="mono block w-full px-3 py-2 text-left text-[12px] text-text-2 transition-colors hover:bg-panel-2 hover:text-text"
+            >
+              {EXPORT_LABELS[f]}
+            </button>
+          ))}
+        </div>
       )}
-    </button>
+      <button
+        type="button"
+        onClick={() => (state === 'idle' ? setOpen((o) => !o) : undefined)}
+        className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-token)] py-2.5 text-[13px] font-semibold text-on-accent transition-[filter] hover:brightness-105"
+        style={{ background: 'var(--accent)', boxShadow: '0 0 0 1px var(--accent-line)' }}
+      >
+        {state === 'generating' ? (
+          <>
+            <span
+              className="h-[15px] w-[15px] animate-spin rounded-full"
+              style={{ border: '2px solid rgba(4,19,13,.3)', borderTopColor: '#04130d', animationDuration: '0.7s' }}
+            />
+            Generating…
+          </>
+        ) : state === 'done' ? (
+          <>
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12l5 5L20 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Exported
+          </>
+        ) : (
+          <>
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Export As-built
+          </>
+        )}
+      </button>
+    </div>
   )
 }
 

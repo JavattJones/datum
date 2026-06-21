@@ -121,3 +121,34 @@
   all match. Layer toggles drive the scene live.
 - Next: feature 6 (`real_integration`) — backend wiring (Phase 6).
 
+---
+
+## 2026-06-21 — Feature 6 (real_integration) DONE
+
+- Built a typed, swappable pipeline integration layer in `lib/pipeline/`:
+  - `types.ts` — `PipelineAdapter` contract (createJob / getProgress /
+    getResult / exportAsset) + JobProgress/JobResult/ExportFormat.
+  - `webodm.ts` — production adapter against the documented WebODM REST API
+    (multipart task POST, poll `running_progress`, status-code map, asset
+    download). Metrics/georef expected from a `datum-metrics.json` asset; if
+    absent it throws rather than fabricating numbers.
+  - `mock.ts` — dev fallback (no `VITE_PIPELINE_API`): reproduces the 5-phase
+    ~5s curve + procedural terrain (modelUrl:null) + DEMO_MODEL + demo georef.
+  - `export.ts` — client-side as-built generators (GeoJSON/glTF/DXF/report)
+    + downloadArtifact; `index.ts` — env-based singleton `pipeline`.
+- Wiring: Upload posts photos via `pipeline.createJob` (real file picker +
+  drag-drop add File objects; "Use sample set" → mock). Processing polls
+  `pipeline.getProgress(jobId)` (replaced the rAF sim) and on complete pulls
+  `getResult` → store `setResult`. Viewer loads real glTF via drei `useGLTF`
+  when `modelUrl` is set (boundary/dims derived from the mesh bbox), else the
+  procedural mock terrain. Inspector Export → format menu → `exportAsset` →
+  download.
+- Store: Photo.file, jobId/modelUrl/georef + setJob/setResult; GeoRef type;
+  MOCK_MODEL → exported DEMO_MODEL. `.env.example` + ImportMetaEnv typings.
+- Verified: `tsc --noEmit` + `npm run build` green. End-to-end mock flow
+  unchanged (upload→process→viewer hi-fi intact); export actually downloaded
+  `vega-norte_p-204.geojson`; format menu renders. WebODM path is implemented
+  to contract but needs a live instance to validate end-to-end (no backend
+  reachable in this sandbox).
+- Next: feature 7 (`polish`).
+
