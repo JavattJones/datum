@@ -53,3 +53,22 @@
   couldn't download in the sandbox — empty + thumbs + foot states all match.
 - Next: feature 3 (`processing_screen`).
 
+---
+
+## 2026-06-21 — Feature 3 (processing_screen) DONE
+
+- Processing screen brought to pixel-perfect vs `02-processing.png` (Precision).
+- Progress driver abstracted out of the UI: `lib/processing.ts` holds the 5
+  `PROCESSING_PHASES` (English copy) + `useSimulatedProcessing` hook (rAF
+  0→100% over 5s, 420ms settle → viewer). Phase 6 swaps it for backend polling.
+- `components/processing/PhaseList.tsx`: per-phase thematic SVG icons; states
+  pending (icon, text-3) / active (panel pill + .7s spinner + accent) / done
+  (accent check, text-2). `complete` flag marks all done at 100%.
+- `ProcessingScreen`: SVG ring (viewBox 100, r=44, sw=3, dashoffset) + mono %
+  + RECONSTRUCTING label; 22px/640 title + 14px sub per active phase.
+- Verified: `tsc --noEmit` + `npm run build` green; visual captured at 55%
+  (system Chromium) — ring, title, and all 5 step states match the reference.
+- Note: first capture came out blank (transient timing); re-shot with a
+  `waitForSelector` guard. Whole UI confirmed English.
+- Next: feature 4 (`viewer_3d`).
+
