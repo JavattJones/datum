@@ -51,7 +51,7 @@
         "Visual match against screenshots/01-upload.png (Precision)"
       ],
       "reference_shot": "reference/design-handoff/screenshots/01-upload.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 3,
@@ -66,7 +66,7 @@
         "Visual match against screenshots/02-processing.png (Precision)"
       ],
       "reference_shot": "reference/design-handoff/screenshots/02-processing.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 4,
@@ -83,7 +83,7 @@
         "Visual match against screenshots/03-viewer.png (Precision)"
       ],
       "reference_shot": "reference/design-handoff/screenshots/03-viewer.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 5,
@@ -100,7 +100,7 @@
         "Visual match against screenshots/03-viewer.png inspector + theme-topo/theme-studio"
       ],
       "reference_shot": "reference/design-handoff/screenshots/03-viewer.png",
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 6,
@@ -115,7 +115,7 @@
         "No simulated data remains on the production path"
       ],
       "reference_shot": null,
-      "status": "pending"
+      "status": "done"
     },
     {
       "id": 7,
@@ -130,7 +130,7 @@
         "Visual match across the 3 breakpoints (desktop/tablet/mobile) and 3 themes"
       ],
       "reference_shot": null,
-      "status": "pending"
+      "status": "done"
     }
   ]
 }

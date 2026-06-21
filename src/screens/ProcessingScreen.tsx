@@ -1,97 +1,110 @@
-import { useEffect } from 'react'
+import { useState } from 'react'
 import { useAppStore } from '@/store/appStore'
+import { PROCESSING_PHASES, useReconstruction } from '@/lib/processing'
+import { pipeline } from '@/lib/pipeline'
+import { PhaseList } from '@/components/processing/PhaseList'
 
-const PHASES = [
-  { title: 'Aligning photographs', sub: 'Detecting keypoints and estimating camera poses…' },
-  { title: 'Dense point cloud', sub: 'Triangulating 2.1 M points…' },
-  { title: 'Building 3D mesh', sub: 'Reconstructing surface and normals…' },
-  { title: 'Projecting textures', sub: 'Mapping photographic color…' },
-  { title: 'Georeferencing as-built', sub: 'Applying metric scale and coordinates…' },
-] as const
-
-const TOTAL_MS = 5000
-const RADIUS = 88
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS
+const RING_LEN = 276.5 // 2π·44, the reference ring circumference
 
 /**
- * Phase 3 — Processing screen (scaffold).
- * Simulated progress driver. In production this is fed by backend polling/websocket.
+ * Phase 3 — Processing screen.
+ * SVG progress ring + 5-phase step list, fed by the pipeline backend via
+ * polling (mock adapter offline). On completion it pulls the reconstruction
+ * result and advances to the viewer; on failure it shows an error state.
+ * Reference: reference/design-handoff/README.md › SCREEN Processing.
  */
 export function ProcessingScreen() {
+  const jobId = useAppStore((s) => s.jobId)
   const progress = useAppStore((s) => s.processing.progress)
   const currentStep = useAppStore((s) => s.processing.currentStep)
   const setProcessing = useAppStore((s) => s.setProcessing)
+  const setResult = useAppStore((s) => s.setResult)
   const setScreen = useAppStore((s) => s.setScreen)
+  const reset = useAppStore((s) => s.reset)
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    const start = performance.now()
-    let raf = 0
-    const tick = (now: number) => {
-      const pct = Math.min(100, ((now - start) / TOTAL_MS) * 100)
-      setProcessing({
-        progress: pct,
-        currentStep: Math.min(PHASES.length - 1, Math.floor((pct / 100) * PHASES.length)),
-      })
-      if (pct < 100) {
-        raf = requestAnimationFrame(tick)
-      } else {
-        setTimeout(() => setScreen('viewer'), 420)
+  useReconstruction(
+    jobId,
+    setProcessing,
+    async () => {
+      if (!jobId) return
+      try {
+        const result = await pipeline.getResult(jobId)
+        setResult(result)
+        setScreen('viewer')
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Could not load the reconstruction')
       }
-    }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
-  }, [setProcessing, setScreen])
+    },
+    (message) => setError(message),
+  )
+
+  const complete = progress >= 100
+  const phase = PROCESSING_PHASES[currentStep]
+
+  if (error) {
+    return (
+      <div className="grid h-full place-items-center px-7">
+        <div className="w-full max-w-[420px] text-center">
+          <div
+            className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-full"
+            style={{ background: 'rgba(239,68,68,0.12)', color: 'var(--danger)' }}
+          >
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+            </svg>
+          </div>
+          <h2 className="mb-2 text-[22px] font-[640] tracking-[-0.02em]">Reconstruction failed</h2>
+          <p className="mb-7 text-[14px] text-text-2">{error}</p>
+          <button
+            type="button"
+            onClick={reset}
+            className="inline-flex items-center gap-2 rounded-[var(--radius-token)] px-5 py-[11px] text-[14px] font-semibold text-on-accent transition-[filter] hover:brightness-105"
+            style={{ background: 'var(--accent)', boxShadow: '0 0 0 1px var(--accent-line)' }}
+          >
+            Back to upload
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="grid h-full place-items-center px-6">
+    <div className="grid h-full place-items-center px-7">
       <div className="w-full max-w-[560px] text-center">
         {/* Progress ring */}
-        <div className="relative mx-auto h-[220px] w-[220px]">
-          <svg className="h-full w-full -rotate-90" viewBox="0 0 220 220">
-            <circle cx="110" cy="110" r={RADIUS} fill="none" stroke="var(--stroke)" strokeWidth="6" />
+        <div className="relative mx-auto mb-[30px] h-[220px] w-[220px]">
+          <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="44" fill="none" stroke="var(--stroke)" strokeWidth="3" />
             <circle
-              cx="110"
-              cy="110"
-              r={RADIUS}
+              cx="50"
+              cy="50"
+              r="44"
               fill="none"
               stroke="var(--accent)"
-              strokeWidth="6"
+              strokeWidth="3"
               strokeLinecap="round"
-              strokeDasharray={CIRCUMFERENCE}
-              strokeDashoffset={CIRCUMFERENCE * (1 - progress / 100)}
+              strokeDasharray={RING_LEN}
+              strokeDashoffset={RING_LEN * (1 - progress / 100)}
+              transform="rotate(-90 50 50)"
             />
           </svg>
-          <div className="absolute inset-0 grid place-content-center">
-            <span className="mono text-[40px] font-semibold leading-none">{Math.round(progress)}%</span>
-            <span className="mono mt-1 text-[11px] uppercase tracking-[0.13em] text-text-3">
-              Reconstructing
-            </span>
+          <div className="absolute inset-0 grid place-items-center">
+            <div>
+              <div className="mono text-[40px] font-semibold leading-none tracking-[-0.02em]">
+                {Math.round(progress)}%
+              </div>
+              <div className="mono mt-[7px] text-[10px] uppercase tracking-[0.16em] text-text-3">
+                Reconstructing
+              </div>
+            </div>
           </div>
         </div>
 
-        <h2 className="mt-8 text-[20px] font-semibold">{PHASES[currentStep].title}</h2>
-        <p className="mt-1 text-[14px] text-text-2">{PHASES[currentStep].sub}</p>
+        <h2 className="mb-2 text-[22px] font-[640] tracking-[-0.02em]">{phase.title}</h2>
+        <p className="min-h-[21px] text-[14px] text-text-2">{phase.sub}</p>
 
-        {/* Phase list */}
-        <ul className="mx-auto mt-8 max-w-[420px] space-y-1.5 text-left">
-          {PHASES.map((phase, i) => {
-            const done = i < currentStep
-            const active = i === currentStep
-            return (
-              <li
-                key={phase.title}
-                className={`mono flex items-center gap-3 rounded-[var(--radius-token)] px-3 py-2.5 text-[13px] ${
-                  active ? 'bg-panel text-text' : 'text-text-3'
-                }`}
-              >
-                <span className={active || done ? 'text-accent' : 'text-text-3'}>
-                  {done ? '✓' : active ? '◐' : '○'}
-                </span>
-                {phase.title}
-              </li>
-            )
-          })}
-        </ul>
+        <PhaseList currentStep={currentStep} complete={complete} />
       </div>
     </div>
   )

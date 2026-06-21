@@ -42,7 +42,7 @@ export function TopBar() {
           style={{ background: 'var(--accent)', boxShadow: '0 0 8px var(--accent)' }}
         />
         <span>
-          Parcela <b className="font-semibold text-text">P-204</b> · Vega Norte
+          Plot <b className="font-semibold text-text">P-204</b> · Vega Norte
         </span>
       </div>
 
@@ -84,7 +84,7 @@ export function TopBar() {
         aria-label="Help"
         aria-haspopup="dialog"
         onClick={() => setHelpOpen(true)}
-        className="grid h-[34px] w-[34px] place-items-center rounded-full border border-stroke bg-panel text-text-2 transition-colors hover:text-text"
+        className="touch-target grid h-[34px] w-[34px] place-items-center rounded-full border border-stroke bg-panel text-text-2 transition-colors hover:text-text"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
           <circle cx="12" cy="12" r="10" />

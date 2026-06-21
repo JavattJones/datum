@@ -20,7 +20,9 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "shoot": "node scripts/shoot.mjs",
-    "verify": "node scripts/verify.mjs"
+    "verify": "node scripts/verify.mjs",
+    "server": "node server/index.mjs",
+    "server:install": "npm install --prefix server"
   },
   "dependencies": {
     "@fontsource-variable/geist-mono": "^5.2.8",

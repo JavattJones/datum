@@ -170,11 +170,125 @@ body {
   animation: screen-in 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Viewer — floating dimension labels (anchored to the 3D geometry). */
+.dim-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--text);
+  background: color-mix(in srgb, var(--bg-2) 88%, transparent);
+  border: 1px solid var(--accent-line);
+  padding: 3px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.dim-label-area {
+  color: var(--accent);
+  border-color: var(--accent);
+  font-size: 12px;
+}
+[data-theme='light'] .dim-label {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Viewer — scale bar (open-bottom bracket with a center tick). */
+.scalebar-bar {
+  width: 80px;
+  height: 5px;
+  border: 1px solid var(--text-2);
+  border-top: none;
+  position: relative;
+}
+.scalebar-bar::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--text-2);
+}
+
+/* Inspector — mobile bottom sheet (< 880px). Desktop is a static side panel. */
+.insp-mobile-tab {
+  display: none;
+}
+@media (max-width: 879px) {
+  .insp-sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    height: 56%;
+    border-left: none;
+    border-top: 1px solid var(--stroke);
+    border-radius: 18px 18px 0 0;
+    transform: translateY(calc(100% - 52px));
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 30;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3);
+  }
+  .insp-sheet.open {
+    transform: translateY(0);
+  }
+  .insp-mobile-tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 52px;
+    flex: 0 0 52px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-2);
+  }
+  .insp-mobile-tab .grip {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--stroke-2);
+  }
+}
+
+/* Thumb grid: staggered pop-in as photos are added. */
+@keyframes thumb-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;
+  }
+}
+
+/* A11y — visible keyboard focus (mouse clicks stay clean via :focus-visible). */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* A11y — comfortable touch targets (≥44px) for viewer/topbar controls on
+   touch-ish viewports. Desktop keeps the dense reference sizing. */
+@media (max-width: 600px) {
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
   }
 }
