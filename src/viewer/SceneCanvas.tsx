@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Line, Html, useGLTF, BakeShadows, AdaptiveDpr } from '@react-three/drei'
+import { OrbitControls, Line, Html, useGLTF, BakeShadows, AdaptiveDpr, useProgress } from '@react-three/drei'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import * as THREE from 'three'
 import { useAppStore, type CameraView, type ModelData } from '@/store/appStore'
@@ -249,8 +249,47 @@ function Scene() {
   )
 }
 
+function GltfLoadingOverlay() {
+  const modelUrl = useAppStore((s) => s.modelUrl)
+  const { active, progress } = useProgress()
+
+  if (!modelUrl || !active) return null
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '14px',
+        background: 'radial-gradient(120% 90% at 60% 15%, var(--scene-top), var(--scene-bot))',
+        zIndex: 10,
+      }}
+    >
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="animate-spin">
+        <circle cx="20" cy="20" r="16" stroke="var(--stroke)" strokeWidth="3" />
+        <circle
+          cx="20"
+          cy="20"
+          r="16"
+          stroke="var(--accent)"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray="50 51"
+        />
+      </svg>
+      <span className="mono text-[13px] text-text-2">Loading 3D model…</span>
+      <span className="mono text-[12px] font-semibold text-accent">{Math.round(progress)}%</span>
+    </div>
+  )
+}
+
 export function SceneCanvas() {
   return (
+    <>
     <Canvas
       shadows
       dpr={[1, 2]}
@@ -265,5 +304,7 @@ export function SceneCanvas() {
     >
       <Scene />
     </Canvas>
+    <GltfLoadingOverlay />
+    </>
   )
 }
